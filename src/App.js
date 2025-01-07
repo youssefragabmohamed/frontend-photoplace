@@ -29,9 +29,13 @@ function App() {
         <h1>Photo Marketplace</h1>
         <p>{message}</p>
       </header>
+      <div className="side-tab">
+        <div className="tab-header">Tab Header</div>
+        <div className="tab-content">Tab Content</div>
+        <button className="close-btn">Close</button>
+      </div>
     </div>
   );
 }
 
 export default App;
-
