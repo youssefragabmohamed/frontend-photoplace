@@ -17,7 +17,7 @@ const LoginPage = ({ setUser }) => {
     setError(null);
 
     try {
-      const response = await fetch("http://192.168.1.109:5000/api/login", {
+      const response = await fetch("https://photoplace-backend.onrender.com/api/login", { // Updated backend URL
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

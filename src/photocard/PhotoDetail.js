@@ -15,7 +15,7 @@ const PhotoDetail = () => {
   useEffect(() => {
     const fetchPhoto = async () => {
       try {
-        const response = await fetch(`http://192.168.1.109:5000/photo/${id}`);
+        const response = await fetch(`https://photoplace-backend.onrender.com/photo/${id}`); // Updated backend URL
         if (!response.ok) {
           throw new Error("Photo not found");
         }
@@ -38,7 +38,7 @@ const PhotoDetail = () => {
 
   const imageUrl = photo.url?.startsWith("http")
     ? photo.url
-    : `http://192.168.1.109:5000${photo.url}`;
+    : `https://photoplace-backend.onrender.com${photo.url}`; // Updated backend URL
 
   return (
     <div className="photo-detail">

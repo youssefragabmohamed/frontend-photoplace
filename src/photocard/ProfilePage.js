@@ -18,7 +18,7 @@ const ProfilePage = () => {
 
   const fetchUserPhotos = async (email) => {
     try {
-      const response = await fetch(`http://192.168.1.109:5000/photos?user=${email}`);
+      const response = await fetch(`https://photoplace-backend.onrender.com/photos?user=${email}`); // Updated backend URL
       const data = await response.json();
       setPhotos(data);
     } catch (error) {
@@ -42,7 +42,7 @@ const ProfilePage = () => {
             {photos.length > 0 ? (
               photos.map(photo => (
                 <div key={photo._id} className="photo-card">
-                  <img src={`http://192.168.1.109:5000${photo.url}`} alt={photo.title} />
+                  <img src={`https://photoplace-backend.onrender.com${photo.url}`} alt={photo.title} /> {/* Updated backend URL */}
                   <p>{photo.title}</p>
                 </div>
               ))

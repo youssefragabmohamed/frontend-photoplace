@@ -13,7 +13,7 @@ function PhotoCard({ photo }) {
     <Link to={`/photo/${photo._id}`} className="photo-card-link">
       <div className="photo-card">
         <img
-          src={photo.url.startsWith("http") ? photo.url : `http://192.168.1.109:5000${photo.url}`}
+          src={photo.url.startsWith("http") ? photo.url : `https://photoplace-backend.onrender.com${photo.url}`} // Updated backend URL
           alt={photo.title || "Photo"}
           className="photo-img"
         />

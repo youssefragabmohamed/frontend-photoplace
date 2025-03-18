@@ -8,7 +8,7 @@ const PhotoGallery = () => {
   const fetchPhotos = () => {
     setLoading(true);
     console.log("Fetching photos from API..."); // Debugging log
-    fetch("http://192.168.1.109:5000/photos")
+    fetch("https://photoplace-backend.onrender.com/photos") // Updated backend URL
       .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);

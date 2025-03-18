@@ -17,7 +17,7 @@ const SignUpPage = ({ setUser }) => {
     setError(null);
 
     try {
-      const response = await fetch("http://192.168.1.109:5000/api/signup", {
+      const response = await fetch("https://photoplace-backend.onrender.com/api/signup", { // Updated backend URL
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
