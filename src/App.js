@@ -10,6 +10,7 @@ import PhotoDetail from "./photocard/PhotoDetail";
 import UploadPhoto from "./photocard/UploadPhoto";
 import ProfilePage from "./photocard/ProfilePage";
 import PrivateRoute from "./photocard/PrivateRoute";
+import Photogrid from "./photocard/Photogrid"; // Add the import for PhotoGrid
 import './App.css'; // Ensure the global CSS file is imported
 
 const App = () => {
