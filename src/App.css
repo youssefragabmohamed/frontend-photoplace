@@ -1,42 +1,622 @@
+/* General styling for the App */
 .App {
-  text-align: center;
+  font-family: 'Inter', Arial, sans-serif !important;
+  background: linear-gradient(135deg, #f8f0ff, #e6e6ff) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: center !important;
+  min-height: 100vh !important;
 }
 
+/* Header */
 .App-header {
-  background-color: #282c34;
-  padding: 20px;
-  color: white;
+  background: linear-gradient(135deg, #8a2be2, #6a1b9a) !important;
+  padding: 20px !important;
+  color: white !important;
+  display: flex !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  position: relative !important;
+  gap: 20px !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
 }
 
+/* Logo */
+.App-header .logo h1 {
+  font-size: 1.8rem !important;
+  margin: 0 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Dropdown */
+.dropbtn {
+  background: linear-gradient(135deg, #9c27b0, #7b1fa2) !important;
+  color: white !important;
+  padding: 12px 20px !important;
+  font-size: 16px !important;
+  border: none !important;
+  cursor: pointer !important;
+  border-radius: 8px !important;
+  transition: transform 0.2s ease, box-shadow 0.3s ease !important;
+}
+
+.dropbtn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+.dropdown-content {
+  display: none !important;
+  position: absolute !important;
+  background-color: #ffffff !important;
+  min-width: 160px !important;
+  z-index: 1 !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+.dropdown-content a {
+  color: #333 !important;
+  padding: 12px 16px !important;
+  text-decoration: none !important;
+  display: block !important;
+  transition: background-color 0.3s ease !important;
+}
+
+.dropdown-content a:hover {
+  background-color: #f1f1f1 !important;
+}
+
+.dropdown:hover .dropdown-content {
+  display: block !important;
+}
+
+/* Search bar */
 .search-bar {
-  margin: 20px;
+  margin: 20px auto !important;
+  display: flex !important;
+  justify-content: center !important;
+  gap: 10px !important;
 }
 
 .search-bar input {
-  padding: 10px;
-  width: 200px;
-  font-size: 16px;
+  padding: 12px !important;
+  width: 250px !important;
+  font-size: 16px !important;
+  border: 1px solid #ddd !important;
+  border-radius: 8px !important;
+  outline: none !important;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
 }
 
+.search-bar input:focus {
+  border-color: #9c27b0 !important;
+  box-shadow: 0 0 8px rgba(156, 39, 176, 0.6) !important;
+}
+
+.search-bar select {
+  padding: 12px !important;
+  font-size: 16px !important;
+  border: 1px solid #ddd !important;
+  border-radius: 8px !important;
+  outline: none !important;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+.search-bar select:focus {
+  border-color: #9c27b0 !important;
+  box-shadow: 0 0 8px rgba(156, 39, 176, 0.6) !important;
+}
+
+/* === PHOTO GRID - PINTEREST STYLE === */
 .photo-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 10px;
-  padding: 20px;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)) !important;
+  gap: 20px !important;
+  padding: 20px !important;
+  justify-content: center !important;
 }
 
+/* Photo Card */
 .photo-card {
-  border: 1px solid #ccc;
-  padding: 10px;
-  text-align: center;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  background-color: #fff !important;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1) !important;
+  transition: transform 0.2s ease-in-out, box-shadow 0.3s ease !important;
+  text-align: center !important;
+  position: relative !important;
+}
+
+.photo-card:hover {
+  transform: scale(1.05) !important;
+  box-shadow: 0px 8px 12px rgba(0, 0, 0, 0.2) !important;
 }
 
 .photo-card img {
-  width: 100%;
-  height: auto;
+  width: 100% !important;
+  height: 300px !important;
+  object-fit: cover !important;
+  border-radius: 8px !important;
+  display: block !important;
 }
 
 .photo-card p {
+  font-size: 16px !important;
+  margin-top: 10px !important;
+  font-weight: 600 !important;
+  color: #333 !important;
+}
+
+/* === PLACEHOLDER PHOTO CARDS === */
+.placeholder-card {
+  width: 100% !important;
+  height: 300px !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 18px !important;
+  font-weight: bold !important;
+  color: #555 !important;
+  background-color: #f0f0f0 !important;
+}
+
+/* Assign pastel colors to placeholder cards */
+.placeholder-card.placeholder-0 { background-color: #e1bee7 !important; } /* Light Purple */
+.placeholder-card.placeholder-1 { background-color: #ce93d8 !important; } /* Light Lilac */
+.placeholder-card.placeholder-2 { background-color: #ba68c8 !important; } /* Light Violet */
+.placeholder-card.placeholder-3 { background-color: #ab47bc !important; } /* Light Magenta */
+.placeholder-card.placeholder-4 { background-color: #9575cd !important; } /* Light Indigo */
+.placeholder-card.placeholder-5 { background-color: #7e57c2 !important; } /* Light Deep Purple */
+.placeholder-card.placeholder-6 { background-color: #673ab7 !important; } /* Light Dark Purple */
+.placeholder-card.placeholder-7 { background-color: #5e35b1 !important; } /* Light Dark Violet */
+.placeholder-card.placeholder-8 { background-color: #512da8 !important; } /* Light Dark Indigo */
+.placeholder-card.placeholder-9 { background-color: #4527a0 !important; } /* Light Dark Magenta */
+
+/* === PHOTO DETAIL PAGE === */
+.photo-detail {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  padding: 20px !important;
+  background: linear-gradient(135deg, #f8f0ff, #e6e6ff) !important;
+  border-radius: 12px !important;
+  margin: 20px !important;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.photo-detail-container {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  background-color: #fff !important;
+  padding: 20px !important;
+  border-radius: 12px !important;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.photo-detail-img {
+  max-width: 100% !important;
+  height: auto !important;
+  margin-bottom: 20px !important;
+  border-radius: 8px !important;
+}
+
+.photo-info {
+  text-align: center !important;
+  color: #333 !important;
+}
+
+/* Buttons */
+.purchase-button,
+.back-button,
+.delete-button {
+  padding: 12px 24px !important;
+  font-size: 16px !important;
+  border: none !important;
+  cursor: pointer !important;
+  margin-top: 10px !important;
+  border-radius: 8px !important;
+  transition: transform 0.2s ease, box-shadow 0.3s ease !important;
+}
+
+.purchase-button {
+  background: linear-gradient(135deg, #9c27b0, #7b1fa2) !important;
+  color: white !important;
+}
+
+.purchase-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+.back-button {
+  background: linear-gradient(135deg, #6c757d, #5a6268) !important;
+  color: white !important;
+}
+
+.back-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+.delete-button {
+  background: linear-gradient(135deg, #dc3545, #c82333) !important;
+  color: white !important;
+}
+
+.delete-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* === UPLOAD PHOTO PAGE === */
+.upload-photo {
+  margin: 20px !important;
+  padding: 20px !important;
+  background-color: #fff !important;
+  border-radius: 12px !important;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.upload-photo form {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.upload-photo input,
+.upload-photo textarea {
+  margin-bottom: 12px !important;
+  padding: 12px !important;
+  font-size: 16px !important;
+  border: 1px solid #ddd !important;
+  border-radius: 8px !important;
+  outline: none !important;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+.upload-photo input:focus,
+.upload-photo textarea:focus {
+  border-color: #9c27b0 !important;
+  box-shadow: 0 0 8px rgba(156, 39, 176, 0.6) !important;
+}
+
+.upload-photo button {
+  background: linear-gradient(135deg, #9c27b0, #7b1fa2) !important;
+  color: white !important;
+  padding: 12px !important;
+  font-size: 16px !important;
+  border: none !important;
+  cursor: pointer !important;
+  border-radius: 8px !important;
+  transition: transform 0.2s ease, box-shadow 0.3s ease !important;
+}
+
+.upload-photo button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* === NOTIFICATIONS === */
+.notification {
+  position: fixed !important;
+  top: 20px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  background-color: #333 !important;
+  color: white !important;
+  padding: 12px 24px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3) !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.notification.success {
+  background: linear-gradient(135deg, #28a745, #218838) !important;
+}
+
+.notification.error {
+  background: linear-gradient(135deg, #dc3545, #c82333) !important;
+}
+
+.notification .close-btn {
+  background: none !important;
+  border: none !important;
+  color: white !important;
+  font-size: 16px !important;
+  cursor: pointer !important;
+  padding: 0 10px !important;
+}
+
+/* === LOADER SPINNER === */
+.spinner-container {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  z-index: 9999 !important;
+}
+
+.spinner {
+  border: 4px solid #f3f3f3 !important;
+  border-top: 4px solid #9c27b0 !important;
+  border-radius: 50% !important;
+  width: 50px !important;
+  height: 50px !important;
+  animation: spin 2s linear infinite !important;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg) !important; }
+  100% { transform: rotate(360deg) !important; }
+}
+
+/* === LOGIN PAGE === */
+.login-container {
+  max-width: 400px !important;
+  margin: 0 auto !important;
+  padding: 20px !important;
+  text-align: center !important;
+  background: linear-gradient(135deg, #ffffff, #f8f0ff) !important;
+  border-radius: 12px !important;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.login-form {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+.login-input {
+  padding: 12px !important;
+  border: 1px solid #ddd !important;
+  border-radius: 8px !important;
+  outline: none !important;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+.login-input:focus {
+  border-color: #9c27b0 !important;
+  box-shadow: 0 0 8px rgba(156, 39, 176, 0.6) !important;
+}
+
+.login-button {
+  padding: 12px !important;
+  background: linear-gradient(135deg, #9c27b0, #7b1fa2) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  transition: transform 0.2s ease, box-shadow 0.3s ease !important;
+}
+
+.login-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+.error-message {
+  color: #dc3545 !important;
+}
+
+.signup-link {
+  color: #9c27b0 !important;
+  cursor: pointer !important;
+  text-decoration: underline !important;
+}
+
+/* === SIGNUP PAGE === */
+.signup-container {
+  max-width: 400px !important;
+  margin: 0 auto !important;
+  padding: 20px !important;
+  text-align: center !important;
+  background: linear-gradient(135deg, #ffffff, #f8f0ff) !important;
+  border-radius: 12px !important;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.signup-form {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+.signup-input {
+  padding: 12px !important;
+  border: 1px solid #ddd !important;
+  border-radius: 8px !important;
+  outline: none !important;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+.signup-input:focus {
+  border-color: #9c27b0 !important;
+  box-shadow: 0 0 8px rgba(156, 39, 176, 0.6) !important;
+}
+
+.signup-button {
+  padding: 12px !important;
+  background: linear-gradient(135deg, #9c27b0, #7b1fa2) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  transition: transform 0.2s ease, box-shadow 0.3s ease !important;
+}
+
+.signup-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+.login-link {
+  color: #9c27b0 !important;
+  cursor: pointer !important;
+  text-decoration: underline !important;
+}
+
+/* === HEADER === */
+.logout-button {
+  background: none !important;
+  border: none !important;
+  color: white !important;
+  cursor: pointer !important;
+  font-size: 16px !important;
+  transition: color 0.3s ease !important;
+}
+
+.logout-button:hover {
+  color: #ff6b6b !important;
+}
+
+.user-info {
+  margin-left: auto !important;
+  padding-right: 20px !important;
+  color: white !important;
+}
+/* General styling for the App */
+body {
+  font-family: 'Inter', Arial, sans-serif;
+  background: #fafafa;
+  color: #333;
+  margin: 0;
+  padding: 0;
+}
+
+/* Auth Container (Signup & Login) */
+.auth-container {
+  max-width: 350px;
+  margin: 50px auto;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.auth-container h2 {
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.auth-container input {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
   font-size: 16px;
+}
+
+.auth-container button {
+  width: 100%;
+  padding: 12px;
+  background: #3897f0;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.auth-container button:hover {
+  background: #3182d9;
+}
+
+.social-login {
+  margin-top: 15px;
+}
+
+.google-btn,
+.facebook-btn {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.google-btn {
+  background: #db4437;
+  color: white;
+}
+
+.facebook-btn {
+  background: #4267b2;
+  color: white;
+}
+
+/* Profile Page */
+.profile-container {
+  max-width: 500px;
+  margin: 50px auto;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.profile-container h2 {
+  font-size: 24px;
+}
+
+.logout-btn {
+  width: 100%;
+  padding: 12px;
+  background: #ff3b30;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 15px;
+}
+
+.logout-btn:hover {
+  background: #e62e22;
+}
+
+/* User Photos */
+.user-photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  padding: 20px 0;
+}
+
+.user-photos .photo-card {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.user-photos img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 5px;
+}
+
+/* Error Messages */
+.error-message {
+  color: red;
+  font-size: 14px;
   margin-top: 10px;
 }

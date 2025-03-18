@@ -1,41 +1,44 @@
-
-import React, { useState, useEffect } from 'react';
-import PhotoCard from './PhotoCard'; // Assuming PhotoCard is in the same folder
+import React, { useState, useEffect } from "react";
+import Photogrid from "../components/Photogrid";
 
 const PhotoGallery = () => {
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Fetch photos from your API (localhost:5000)
-    fetch('http://localhost:5000/api/photos')
-      .then((response) => response.json())
+  const fetchPhotos = () => {
+    setLoading(true);
+    console.log("Fetching photos from API..."); // Debugging log
+    fetch("http://192.168.1.109:5000/photos")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
       .then((data) => {
-        setPhotos(data); // Store the photos in the state
-        setLoading(false); // Set loading to false after data is fetched
+        console.log("API Response Data:", data); // Debugging log
+        if (!Array.isArray(data)) {
+          throw new Error("Invalid API response: Expected an array.");
+        }
+        setPhotos(data);
+        setLoading(false);
       })
       .catch((error) => {
-        console.error('Error fetching photos:', error);
-        setLoading(false); // Set loading to false in case of error
+        console.error("Error fetching photos:", error); // Debugging log
+        setLoading(false);
       });
-  }, []);
+  };
 
-  if (loading) {
-    return <div>Loading...</div>; // Show loading indicator
-  }
+  useEffect(() => {
+    console.log("Component mounted. Fetching photos..."); // Debugging log
+    fetchPhotos();
+  }, []);
 
   return (
     <div className="photo-gallery">
-      {photos.length > 0 ? (
-        photos.map((photo) => (
-          <PhotoCard key={photo.id} photo={photo} />
-        ))
-      ) : (
-        <p>No photos available.</p>
-      )}
+      <Photogrid photos={photos} loading={loading} />
     </div>
   );
 };
 
 export default PhotoGallery;
-

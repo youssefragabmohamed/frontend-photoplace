@@ -1,64 +1,136 @@
-import React, { useState, useEffect } from 'react';
-import './App.css';
-import Header from './components/Header';
-import SearchBar from './components/SearchBar';
-import PhotoGrid from './PhotoGrid';
-import PhotoGallery from './photocard/PhotoGallery';
-import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from 'react-router-dom';
-import SignUpPage from './photocard/SignUpPage'; // Your SignUpPage component
+import React, { useState, useEffect } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import Header from "./components/Header";
+import SearchBar from "./components/SearchBar";
+import PhotoGallery from "./photocard/PhotoGallery";
+import SignUpPage from "./photocard/SignUpPage";
+import LoginPage from "./photocard/LoginPage";
+import Notification from "./photocard/Notification";
+import PhotoDetail from "./photocard/PhotoDetail";
+import UploadPhoto from "./photocard/UploadPhoto";
+import ProfilePage from "./photocard/ProfilePage";
+import PrivateRoute from "./photocard/PrivateRoute";
+import './App.css'; // Ensure the global CSS file is imported
 
 const App = () => {
   const [photos, setPhotos] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredPhotos, setFilteredPhotos] = useState([]);
   const [user, setUser] = useState(null);
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [notification, setNotification] = useState(null);
 
-  // Fetching data from your API
   useEffect(() => {
-    fetch('http://localhost:5000/photos')  // Make sure this is your correct API endpoint
-      .then((response) => response.json())
-      .then((data) => setPhotos(data))
-      .catch((error) => console.error('Error fetching photos:', error));
+    setLoading(true);
+    fetch("http://192.168.1.109:5000/photos")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log("Fetched photos:", data);
+        if (!Array.isArray(data)) {
+          throw new Error("Invalid response format: Expected an array.");
+        }
+        setPhotos(data);
+        setFilteredPhotos(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching photos:", error.message);
+        setNotification({
+          message: "Failed to load photos. Please try again.",
+          type: "error",
+        });
+        setLoading(false);
+      });
   }, []);
 
-  // Check if the user is logged in or needs to sign up
   useEffect(() => {
-    const storedUser = localStorage.getItem("user"); // Check if user exists
-    if (storedUser) {
-      setUser(JSON.parse(storedUser)); // Set user if found
-    } else {
-      navigate("/signup"); // Redirect to signup page if no user is found
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("userId");
+    if (token && userId) {
+      setUser({ userId });
     }
-  }, [navigate]);
+  }, []);
+
+  const handleSignUp = (loadingState) => setLoading(loadingState);
+
+  const handleUpload = (newPhoto) => {
+    setPhotos((prevPhotos) => [...prevPhotos, newPhoto]);
+    setFilteredPhotos((prevPhotos) => [...prevPhotos, newPhoto]);
+  };
 
   return (
-    <Router>
-      <div className="App">
-        <Header />
-        <SearchBar onSearch={setSearchQuery} />
-        {/* Filtering photos based on search query */}
-        <PhotoGrid
-          photos={photos.filter((photo) =>
-            photo.title.toLowerCase().includes(searchQuery.toLowerCase())
-          )}
+    <div className="App">
+      <Header user={user} setUser={setUser} />
+      {loading && (
+        <div className="spinner-container">
+          <div className="spinner"></div>
+        </div>
+      )}
+
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
         />
-        {/* You can still include the PhotoGallery component if needed */}
-        <PhotoGallery />
-        
-        <Routes>
-          {/* If user is logged in, show the main page; if not, show signup */}
-          <Route path="/" element={user ? (
-            <div>
-              {/* Your main content here */}
-              <h1>Welcome to the Main Page</h1>
-              {/* Add your main page content, such as the search bar, photo grid, etc. */}
-            </div>
-          ) : <Navigate to="/signup" />} />
-          
-          <Route path="/signup" element={<SignUpPage setUser={setUser} />} />
-        </Routes>
-      </div>
-    </Router>
+      )}
+
+      <Routes>
+        <Route
+          path="/signup"
+          element={
+            !user ? (
+              <SignUpPage handleLoading={handleSignUp} />
+            ) : (
+              <Navigate to="/" />
+            )
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            !user ? (
+              <LoginPage setUser={setUser} />
+            ) : (
+              <Navigate to="/" />
+            )
+          }
+        />
+        <Route
+          path="/"
+          element={
+            user ? (
+              <>
+                <SearchBar onSearch={setSearchQuery} />
+                <PhotoGallery
+                  photos={filteredPhotos.filter(
+                    (photo) =>
+                      photo &&
+                      photo.title &&
+                      typeof photo.title === "string" &&
+                      photo.title.toLowerCase().includes(searchQuery.toLowerCase())
+                  )}
+                />
+              </>
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route path="/photo/:id" element={<PhotoDetail />} />
+
+        {/* Protected Routes */}
+        <Route element={<PrivateRoute />}>
+          <Route path="/upload" element={<UploadPhoto onUpload={handleUpload} />} />
+          <Route path="/profile/:userId" element={<ProfilePage />} />
+        </Route>
+      </Routes>
+    </div>
   );
 };
 

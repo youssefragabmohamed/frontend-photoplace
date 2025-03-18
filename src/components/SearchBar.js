@@ -1,26 +1,34 @@
+import React, { useState } from "react";
 
+const SearchBar = ({ onSearch, onFilter }) => {
+  const [query, setQuery] = useState("");
 
-import React, { useState } from 'react';
+  const handleChange = (e) => {
+    setQuery(e.target.value);
+    onSearch(e.target.value);
+  };
 
-function SearchBar({ onSearch }) { // <-- 'function' should be here
-  const [query, setQuery] = useState('');
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    onSearch(query);
+  const handleFilterChange = (e) => {
+    onFilter(e.target.value);
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input 
+    <div className="search-bar">
+      <input
         type="text"
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search photos..."
+        onChange={handleChange}
+        placeholder="Search photos by title..."
+        className="search-input"
       />
-      <button type="submit">Search</button>
-    </form>
+      <select onChange={handleFilterChange} className="filter-select">
+        <option value="">Filter by</option>
+        <option value="newest">Newest</option>
+        <option value="popular">Most Popular</option>
+        <option value="price">Price Range</option>
+      </select>
+    </div>
   );
-}
+};
 
 export default SearchBar;
