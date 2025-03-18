@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import PhotoGrid from "./PhotoGrid"; // Corrected import statement
+import PhotoBox from "./Photobox"; // Updated import statement for PhotoBox
 
 const PhotoGallery = () => {
   const [photos, setPhotos] = useState([]);
@@ -36,7 +36,7 @@ const PhotoGallery = () => {
 
   return (
     <div className="photo-gallery">
-      <PhotoGrid photos={photos} loading={loading} />
+      <PhotoBox photos={photos} loading={loading} /> {/* Use PhotoBox component */}
     </div>
   );
 };
