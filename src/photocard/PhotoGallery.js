@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import Photogrid from "../components/Photogrid";
+import Photogrid from "./components/Photogrid";
 
 const PhotoGallery = () => {
   const [photos, setPhotos] = useState([]);
