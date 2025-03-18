@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Header from "./components/Header";
-import Photogrid from "./components/Photogrid"; // Add the import for PhotoGrid
+import Photogrid from "../components/Photogrid"; // Add the import for PhotoGrid
 import SearchBar from "./components/SearchBar";
 import PhotoGallery from "./photocard/PhotoGallery";
 import SignUpPage from "./photocard/SignUpPage";
