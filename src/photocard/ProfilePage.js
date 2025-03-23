@@ -7,18 +7,28 @@ const ProfilePage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-      fetchUserPhotos(JSON.parse(storedUser).email);
+    const userId = localStorage.getItem("userId");
+    if (userId) {
+      fetchUserProfile(userId);
+      fetchUserPhotos(userId);
     } else {
       navigate("/login");
     }
   }, [navigate]);
 
-  const fetchUserPhotos = async (email) => {
+  const fetchUserProfile = async (userId) => {
     try {
-      const response = await fetch(`https://photoplace-backend-4i8v.onrender.com/api/photos?user=${email}`); // Updated backend URL
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/${userId}/profile`);
+      const data = await response.json();
+      setUser(data);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    }
+  };
+
+  const fetchUserPhotos = async (userId) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos?userId=${userId}`);
       const data = await response.json();
       setPhotos(data);
     } catch (error) {
@@ -27,7 +37,8 @@ const ProfilePage = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
     navigate("/login");
   };
 
@@ -40,9 +51,9 @@ const ProfilePage = () => {
           <button onClick={handleLogout} className="logout-btn">Log Out</button>
           <div className="user-photos">
             {photos.length > 0 ? (
-              photos.map(photo => (
+              photos.map((photo) => (
                 <div key={photo._id} className="photo-card">
-                  <img src={`https://photoplace-backend-4i8v.onrender.com/api/users/${photo.url}`} alt={photo.title} /> {/* Updated backend URL */}
+                  <img src={photo.url} alt={photo.title} />
                   <p>{photo.title}</p>
                 </div>
               ))

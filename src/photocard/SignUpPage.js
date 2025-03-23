@@ -17,7 +17,7 @@ const SignUpPage = ({ setUser }) => {
     setError(null);
 
     try {
-      const response = await fetch("https://photoplace-backend-4i8v.onrender.com/api/users/signup", { // Updated backend URL
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -26,7 +26,8 @@ const SignUpPage = ({ setUser }) => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Signup failed");
 
-      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userId", data.user._id);
       setUser(data.user);
       navigate("/");
     } catch (error) {
@@ -34,11 +35,6 @@ const SignUpPage = ({ setUser }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Mock function for social logins
-  const handleSocialLogin = (provider) => {
-    alert(`Sign in with ${provider} clicked (implement backend flow)`);
   };
 
   return (
@@ -51,10 +47,6 @@ const SignUpPage = ({ setUser }) => {
         <input type="password" name="password" placeholder="Password" onChange={handleChange} required />
         <button type="submit" disabled={loading}>{loading ? "Signing up..." : "Sign Up"}</button>
       </form>
-      <div className="social-login">
-        <button onClick={() => handleSocialLogin("Google")} className="google-btn">Sign up with Google</button>
-        <button onClick={() => handleSocialLogin("Facebook")} className="facebook-btn">Sign up with Facebook</button>
-      </div>
       <p>Already have an account? <a href="/login">Log in</a></p>
     </div>
   );

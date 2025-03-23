@@ -14,7 +14,7 @@ const placeholderColors = [
   "#C8A2C8", // Light Lilac
 ];
 
-const Photobox = ({ photos, loading }) => {
+const Photobox = ({ photos, loading, onDeletePhoto }) => {
   if (loading) {
     return (
       <div className="photo-grid">
@@ -30,6 +30,14 @@ const Photobox = ({ photos, loading }) => {
       </div>
     );
   }
+
+  const handleDelete = (photoId, e) => {
+    e.preventDefault(); // Prevent the Link from navigating
+    e.stopPropagation(); // Stop event propagation
+    if (window.confirm("Are you sure you want to delete this photo?")) {
+      onDeletePhoto(photoId); // Call the onDeletePhoto function passed from the parent
+    }
+  };
 
   return (
     <div className="photo-grid">
@@ -47,6 +55,13 @@ const Photobox = ({ photos, loading }) => {
                 className="photo-img"
               />
               <p className="photo-title">{photo.title}</p>
+              {/* Add a delete button */}
+              <button
+                className="delete-button"
+                onClick={(e) => handleDelete(photo._id, e)}
+              >
+                Delete
+              </button>
             </div>
           </Link>
         );

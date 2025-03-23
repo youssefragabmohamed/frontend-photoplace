@@ -56,11 +56,106 @@ const App = () => {
     }
   }, []);
 
-  const handleSignUp = (loadingState) => setLoading(loadingState);
+  const handleSignUp = async (username, email, password) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/signup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, email, password }),
+      });
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      const data = await response.json();
+      setNotification({ message: "User created successfully", type: "success" });
+      setLoading(false);
+      return data;
+    } catch (error) {
+      console.error("Error signing up:", error.message);
+      setNotification({ message: "Error signing up. Please try again.", type: "error" });
+      setLoading(false);
+    }
+  };
 
-  const handleUpload = (newPhoto) => {
-    setPhotos((prevPhotos) => [...prevPhotos, newPhoto]);
-    setFilteredPhotos((prevPhotos) => [...prevPhotos, newPhoto]);
+  const handleLogin = async (email, password) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      const data = await response.json();
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userId", data.user._id);
+      setUser(data.user);
+      setNotification({ message: "Login successful", type: "success" });
+      setLoading(false);
+      return data;
+    } catch (error) {
+      console.error("Error logging in:", error.message);
+      setNotification({ message: "Error logging in. Please try again.", type: "error" });
+      setLoading(false);
+    }
+  };
+
+  const handleUpload = async (newPhoto) => {
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("photo", newPhoto.file);
+      formData.append("title", newPhoto.title);
+      formData.append("description", newPhoto.description);
+      formData.append("userId", user.userId);
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      const data = await response.json();
+      setPhotos((prevPhotos) => [...prevPhotos, data.photo]);
+      setFilteredPhotos((prevPhotos) => [...prevPhotos, data.photo]);
+      setNotification({ message: "Photo uploaded successfully", type: "success" });
+      setLoading(false);
+    } catch (error) {
+      console.error("Error uploading photo:", error.message);
+      setNotification({ message: "Error uploading photo. Please try again.", type: "error" });
+      setLoading(false);
+    }
+  };
+
+  const handleDeletePhoto = async (photoId) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/${photoId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      setPhotos((prevPhotos) => prevPhotos.filter((photo) => photo._id !== photoId));
+      setFilteredPhotos((prevPhotos) => prevPhotos.filter((photo) => photo._id !== photoId));
+      setNotification({ message: "Photo deleted successfully", type: "success" });
+      setLoading(false);
+    } catch (error) {
+      console.error("Error deleting photo:", error.message);
+      setNotification({ message: "Error deleting photo. Please try again.", type: "error" });
+      setLoading(false);
+    }
   };
 
   return (
@@ -85,7 +180,7 @@ const App = () => {
           path="/signup"
           element={
             !user ? (
-              <SignUpPage handleLoading={handleSignUp} />
+              <SignUpPage handleSignUp={handleSignUp} />
             ) : (
               <Navigate to="/" />
             )
@@ -95,7 +190,7 @@ const App = () => {
           path="/login"
           element={
             !user ? (
-              <LoginPage setUser={setUser} />
+              <LoginPage handleLogin={handleLogin} />
             ) : (
               <Navigate to="/" />
             )
@@ -115,6 +210,7 @@ const App = () => {
                       typeof photo.title === "string" &&
                       photo.title.toLowerCase().includes(searchQuery.toLowerCase())
                   )}
+                  onDeletePhoto={handleDeletePhoto}
                 />
               </>
             ) : (

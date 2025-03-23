@@ -22,13 +22,8 @@ const UploadPhoto = ({ onUpload }) => {
     formData.append("photo", file);
     formData.append("userId", userId); // Add userId to the form data
 
-    // Debugging: Log FormData contents
-    for (let [key, value] of formData.entries()) {
-      console.log(key, value);
-    }
-
     try {
-      const response = await fetch("https://photoplace-backend-4i8v.onrender.com/api/photos/upload", { // Updated backend URL
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/upload`, {
         method: "POST",
         body: formData,
       });
@@ -39,7 +34,7 @@ const UploadPhoto = ({ onUpload }) => {
         throw new Error(data.message || "Upload failed");
       }
 
-      onUpload(data); // Notify parent component of the new photo
+      onUpload(data.photo); // Notify parent component of the new photo
       setTitle("");
       setDescription("");
       setFile(null);

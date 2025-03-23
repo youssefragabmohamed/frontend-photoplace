@@ -15,7 +15,7 @@ const PhotoDetail = () => {
   useEffect(() => {
     const fetchPhoto = async () => {
       try {
-        const response = await fetch(`https://photoplace-backend-4i8v.onrender.com/api/photo/${id}`); // Updated backend URL
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/${id}`);
         if (!response.ok) {
           throw new Error("Photo not found");
         }
@@ -36,10 +36,6 @@ const PhotoDetail = () => {
   if (error) return <div>{error}</div>;
   if (!photo) return <div>Photo not found!</div>;
 
-  const imageUrl = photo.url?.startsWith("http")
-    ? photo.url
-    : `https://photoplace-backend-4i8v.onrender.com/api/photos/${photo.url}`; // Updated backend URL
-
   return (
     <div className="photo-detail">
       <button onClick={handleBack} className="back-button">
@@ -47,16 +43,14 @@ const PhotoDetail = () => {
       </button>
       <div className="photo-detail-container">
         {photo.url ? (
-          <img src={imageUrl} alt={photo.title} className="photo-detail-img" />
+          <img src={photo.url} alt={photo.title} className="photo-detail-img" />
         ) : (
           <p>No image available</p>
         )}
         <div className="photo-info">
           <h2>{photo.title}</h2>
           <p>{photo.description || "No description available"}</p>
-          <p>Photographer: {photo.photographer || "Unknown"}</p>
-          <p>Price: ${photo.price || "Not available"}</p>
-          <button className="purchase-button">Buy Now</button>
+          <p>Photographer: {photo.userId || "Unknown"}</p>
         </div>
       </div>
     </div>
