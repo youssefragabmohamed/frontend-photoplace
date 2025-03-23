@@ -42,7 +42,7 @@ const ProfilePage = () => {
             {photos.length > 0 ? (
               photos.map(photo => (
                 <div key={photo._id} className="photo-card">
-                  <img src={`https://photoplace-backend-4i8v.onrender.com${photo.url}`} alt={photo.title} /> {/* Updated backend URL */}
+                  <img src={`https://photoplace-backend-4i8v.onrender.com/api/users/${photo.url}`} alt={photo.title} /> {/* Updated backend URL */}
                   <p>{photo.title}</p>
                 </div>
               ))

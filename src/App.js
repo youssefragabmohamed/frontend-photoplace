@@ -22,7 +22,7 @@ const App = () => {
 
   useEffect(() => {
     setLoading(true);
-    fetch("https://photoplace-backend-4i8v.onrender.com/photos") // Updated backend URL
+    fetch(`${process.env.REACT_APP_API_URL}/api/photos`) // Updated endpoint with environment variable
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Error ${response.status}: ${response.statusText}`);

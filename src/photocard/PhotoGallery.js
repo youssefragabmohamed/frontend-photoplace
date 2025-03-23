@@ -8,7 +8,7 @@ const PhotoGallery = () => {
   const fetchPhotos = () => {
     setLoading(true);
     console.log("Fetching photos from API..."); // Debugging log
-    fetch("https://photoplace-backend-4i8v.onrender.com/api/photos") // Updated backend URL
+    fetch(`${process.env.REACT_APP_API_URL}/api/photos`) // Use environment variable
       .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);

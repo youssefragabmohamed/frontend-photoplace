@@ -38,7 +38,7 @@ const PhotoDetail = () => {
 
   const imageUrl = photo.url?.startsWith("http")
     ? photo.url
-    : `https://photoplace-backend-4i8v.onrender.com${photo.url}`; // Updated backend URL
+    : `https://photoplace-backend-4i8v.onrender.com/api/photos/${photo.url}`; // Updated backend URL
 
   return (
     <div className="photo-detail">
