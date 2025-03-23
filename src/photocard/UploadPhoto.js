@@ -28,7 +28,7 @@ const UploadPhoto = ({ onUpload }) => {
     }
 
     try {
-      const response = await fetch("https://photoplace-backend.onrender.com/upload", { // Updated backend URL
+      const response = await fetch("https://photoplace-backend-4i8v.onrender.com/upload", { // Updated backend URL
         method: "POST",
         body: formData,
       });

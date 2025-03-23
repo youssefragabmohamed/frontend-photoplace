@@ -22,7 +22,7 @@ const App = () => {
 
   useEffect(() => {
     setLoading(true);
-    fetch("https://photoplace-backend.onrender.com/photos") // Updated backend URL
+    fetch("https://photoplace-backend-4i8v.onrender.com/photos") // Updated backend URL
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Error ${response.status}: ${response.statusText}`);

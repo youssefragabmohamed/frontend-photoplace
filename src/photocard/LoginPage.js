@@ -17,7 +17,7 @@ const LoginPage = ({ setUser }) => {
     setError(null);
 
     try {
-      const response = await fetch("https://photoplace-backend.onrender.com/api/login", { // Updated backend URL
+      const response = await fetch("https://photoplace-backend-4i8v.onrender.com/api/login", { // Updated backend URL
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

@@ -42,7 +42,7 @@ const Photobox = ({ photos, loading }) => {
           <Link to={`/photo/${photo._id}`} key={photo._id} className="photo-card-link">
             <div className="photo-card">
               <img
-                src={photo.url.startsWith("http") ? photo.url : `https://photoplace-backend.onrender.com${photo.url}`} // Updated backend URL
+                src={photo.url.startsWith("http") ? photo.url : `https://photoplace-backend-4i8v.onrender.com${photo.url}`} // Updated backend URL
                 alt={photo.title || "No Title"}
                 className="photo-img"
               />
