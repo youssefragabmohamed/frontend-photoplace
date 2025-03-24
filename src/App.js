@@ -12,9 +12,6 @@ import ProfilePage from "./photocard/ProfilePage";
 import PrivateRoute from "./photocard/PrivateRoute";
 import './App.css';
 
-// Define API base URL with fallback
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://photoplace-backend-4i8v.onrender.com';
-
 const App = () => {
   const [photos, setPhotos] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,9 +24,8 @@ const App = () => {
     const fetchPhotos = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`${API_BASE_URL}/api/photos`);
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos`);
         
-        // Check response type
         const contentType = response.headers.get('content-type');
         if (!contentType?.includes('application/json')) {
           const text = await response.text();
@@ -70,7 +66,7 @@ const App = () => {
   const handleSignUp = async (username, email, password) => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/users/signup`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password }),
@@ -102,7 +98,7 @@ const App = () => {
   const handleLogin = async (email, password) => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/users/login`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -140,7 +136,7 @@ const App = () => {
       formData.append("description", newPhoto.description);
       formData.append("userId", user._id);
 
-      const response = await fetch(`${API_BASE_URL}/api/photos/upload`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/upload`, {
         method: "POST",
         body: formData,
       });
@@ -167,7 +163,7 @@ const App = () => {
   const handleDeletePhoto = async (photoId) => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/photos/${photoId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/${photoId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
