@@ -1,8 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const SignUpPage = ({ setUser }) => {
-  const [formData, setFormData] = useState({ username: "", email: "", password: "" });
+const SignUpPage = ({ handleSignUp }) => {
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: ""
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -17,21 +21,10 @@ const SignUpPage = ({ setUser }) => {
     setError(null);
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/signup`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Signup failed");
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("userId", data.user._id);
-      setUser(data.user);
+      await handleSignUp(formData.username, formData.email, formData.password);
       navigate("/");
     } catch (error) {
-      setError(error.message);
+      setError(error.message || "Signup failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -42,12 +35,39 @@ const SignUpPage = ({ setUser }) => {
       <h2>Sign Up</h2>
       {error && <p className="error-message">{error}</p>}
       <form onSubmit={handleSubmit}>
-        <input type="text" name="username" placeholder="Username" onChange={handleChange} required />
-        <input type="email" name="email" placeholder="Email" onChange={handleChange} required />
-        <input type="password" name="password" placeholder="Password" onChange={handleChange} required />
-        <button type="submit" disabled={loading}>{loading ? "Signing up..." : "Sign Up"}</button>
+        <input
+          type="text"
+          name="username"
+          placeholder="Username"
+          value={formData.username}
+          onChange={handleChange}
+          required
+          minLength={3}
+        />
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={formData.email}
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={formData.password}
+          onChange={handleChange}
+          required
+          minLength={6}
+        />
+        <button type="submit" disabled={loading}>
+          {loading ? "Signing up..." : "Sign Up"}
+        </button>
       </form>
-      <p>Already have an account? <a href="/login">Log in</a></p>
+      <p>
+        Already have an account? <a href="/login">Log in</a>
+      </p>
     </div>
   );
 };

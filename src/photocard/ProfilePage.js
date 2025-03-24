@@ -4,35 +4,50 @@ import { useNavigate } from "react-router-dom";
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [photos, setPhotos] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const userId = localStorage.getItem("userId");
-    if (userId) {
-      fetchUserProfile(userId);
-      fetchUserPhotos(userId);
-    } else {
+    if (!userId) {
       navigate("/login");
+      return;
     }
+    fetchUserProfile(userId);
+    fetchUserPhotos(userId);
   }, [navigate]);
 
   const fetchUserProfile = async (userId) => {
+    setLoading(true);
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/${userId}/profile`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
+      if (!data?._id) throw new Error("Invalid user data");
       setUser(data);
     } catch (error) {
-      console.error("Error fetching user profile:", error);
+      console.error("Profile fetch error:", error);
+      setError(error.message);
+      if (error.message.includes("401")) navigate("/login");
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchUserPhotos = async (userId) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos?userId=${userId}`);
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/photos?userId=${userId}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch photos");
       const data = await response.json();
-      setPhotos(data);
+      setPhotos(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Error fetching user photos:", error);
+      console.error("Photos fetch error:", error);
+      setError(error.message);
     }
   };
 
@@ -42,13 +57,18 @@ const ProfilePage = () => {
     navigate("/login");
   };
 
+  if (loading) return <div className="profile-container">Loading...</div>;
+  if (error) return <div className="profile-container">Error: {error}</div>;
+
   return (
     <div className="profile-container">
-      {user ? (
+      {user && (
         <>
           <h2>{user.username}'s Profile</h2>
           <p>Email: {user.email}</p>
-          <button onClick={handleLogout} className="logout-btn">Log Out</button>
+          <button onClick={handleLogout} className="logout-btn">
+            Log Out
+          </button>
           <div className="user-photos">
             {photos.length > 0 ? (
               photos.map((photo) => (
@@ -58,12 +78,10 @@ const ProfilePage = () => {
                 </div>
               ))
             ) : (
-              <p>No uploaded photos yet.</p>
+              <p>No photos uploaded yet</p>
             )}
           </div>
         </>
-      ) : (
-        <p>Loading profile...</p>
       )}
     </div>
   );
