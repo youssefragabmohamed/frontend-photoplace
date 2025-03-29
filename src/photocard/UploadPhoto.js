@@ -10,31 +10,38 @@ const UploadPhoto = ({ onUpload }) => {
     e.preventDefault();
     setError("");
 
-    const userId = localStorage.getItem("userId"); // Get userId from localStorage
-    if (!userId) {
-      setError("User not authenticated");
+    // 1. Get the JWT token from localStorage
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("Please log in to upload photos.");
       return;
     }
 
+    // 2. Prepare FormData (exclude userId; backend gets it from the token)
     const formData = new FormData();
     formData.append("title", title);
     formData.append("description", description);
-    formData.append("photo", file);
-    formData.append("userId", userId); // Add userId to the form data
+    formData.append("photo", file); // File from input
 
     try {
+      // 3. Send request with the token in headers
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/upload`, {
         method: "POST",
-        body: formData,
+        headers: {
+          Authorization: `Bearer ${token}`, // Critical for MongoDB auth
+        },
+        body: formData, // No need for Content-Type header with FormData
       });
 
       const data = await response.json();
 
+      // 4. Handle errors (e.g., invalid token, MongoDB validation failed)
       if (!response.ok) {
-        throw new Error(data.message || "Upload failed");
+        throw new Error(data.message || "Upload failed. Check your authentication.");
       }
 
-      onUpload(data.photo); // Notify parent component of the new photo
+      // 5. Success: Update parent component and reset form
+      onUpload(data.photo);
       setTitle("");
       setDescription("");
       setFile(null);
@@ -47,31 +54,26 @@ const UploadPhoto = ({ onUpload }) => {
     <div className="upload-photo">
       <h2>Upload Photo</h2>
       {error && <p className="error-message">{error}</p>}
-      <form onSubmit={handleSubmit} className="upload-form">
+      <form onSubmit={handleSubmit}>
         <input
           type="text"
           placeholder="Title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           required
-          className="upload-input"
         />
         <textarea
           placeholder="Description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="upload-textarea"
         />
         <input
           type="file"
           accept="image/*"
           onChange={(e) => setFile(e.target.files[0])}
           required
-          className="upload-input"
         />
-        <button type="submit" className="upload-button">
-          Upload
-        </button>
+        <button type="submit">Upload</button>
       </form>
     </div>
   );
