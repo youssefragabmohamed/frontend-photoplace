@@ -1,32 +1,17 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
-const SignUpPage = ({ handleSignUp }) => {
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    password: ""
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const navigate = useNavigate();
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+const SignUpPage = ({ onSignUp }) => {
+  const [form, setForm] = useState({ username: "", email: "", password: "" });
+  const [status, setStatus] = useState({ loading: false, error: null });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-
+    setStatus({ loading: true, error: null });
     try {
-      await handleSignUp(formData.username, formData.email, formData.password);
-      navigate("/");
+      await onSignUp(form);
     } catch (error) {
-      setError(error.message || "Signup failed. Please try again.");
-    } finally {
-      setLoading(false);
+      setStatus({ loading: false, error: error.message });
     }
   };
 
@@ -35,9 +20,9 @@ const SignUpPage = ({ handleSignUp }) => {
       <div className="card" style={{ maxWidth: "400px", margin: "var(--space-xl) auto", padding: "var(--space-lg)" }}>
         <h1 style={{ textAlign: "center", marginBottom: "var(--space-lg)" }}>Sign Up</h1>
         
-        {error && (
+        {status.error && (
           <div className="notification error" style={{ marginBottom: "var(--space-md)" }}>
-            {error}
+            {status.error}
           </div>
         )}
 
@@ -46,8 +31,8 @@ const SignUpPage = ({ handleSignUp }) => {
             type="text"
             name="username"
             placeholder="Username"
-            value={formData.username}
-            onChange={handleChange}
+            value={form.username}
+            onChange={(e) => setForm({ ...form, username: e.target.value })}
             className="form-input"
             required
             minLength={3}
@@ -56,8 +41,8 @@ const SignUpPage = ({ handleSignUp }) => {
             type="email"
             name="email"
             placeholder="Email"
-            value={formData.email}
-            onChange={handleChange}
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
             className="form-input"
             required
           />
@@ -65,8 +50,8 @@ const SignUpPage = ({ handleSignUp }) => {
             type="password"
             name="password"
             placeholder="Password"
-            value={formData.password}
-            onChange={handleChange}
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
             className="form-input"
             required
             minLength={6}
@@ -74,14 +59,17 @@ const SignUpPage = ({ handleSignUp }) => {
           <button 
             type="submit" 
             className="btn btn-primary"
-            disabled={loading}
+            disabled={status.loading}
           >
-            {loading ? "Creating account..." : "Sign Up"}
+            {status.loading ? "Creating account..." : "Sign Up"}
           </button>
         </form>
 
         <div style={{ marginTop: "var(--space-lg)", textAlign: "center" }}>
-          <p className="text-muted">Already have an account? <a href="/login" style={{ color: "var(--primary)" }}>Log in</a></p>
+          <p className="text-muted">
+            Already have an account? {' '}
+            <NavLink to="/login" style={{ color: "var(--primary)" }}>Log in</NavLink>
+          </p>
         </div>
       </div>
     </div>

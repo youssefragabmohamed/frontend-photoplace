@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 const LoginPage = ({ setUser }) => {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -29,7 +30,6 @@ const LoginPage = ({ setUser }) => {
       localStorage.setItem("token", data.token);
       localStorage.setItem("userId", data.user._id);
       setUser(data.user);
-      navigate("/");
     } catch (error) {
       setError(error.message);
     } finally {
@@ -75,7 +75,7 @@ const LoginPage = ({ setUser }) => {
         </form>
 
         <div style={{ marginTop: "var(--space-lg)", textAlign: "center" }}>
-          <p className="text-muted">Don't have an account? <a href="/signup" style={{ color: "var(--primary)" }}>Sign up</a></p>
+          <p className="text-muted">Don't have an account? <NavLink to="/signup" style={{ color: "var(--primary)" }}>Sign up</NavLink></p>
         </div>
       </div>
     </div>

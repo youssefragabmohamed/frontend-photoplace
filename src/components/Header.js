@@ -1,10 +1,13 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserCircle, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 
 const Header = ({ user, onLogout }) => {
-  const navigate = useNavigate();
+  const location = useLocation();
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
+
+  if (isAuthPage) return null;
 
   return (
     <header className="header" style={{

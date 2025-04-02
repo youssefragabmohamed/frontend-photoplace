@@ -91,9 +91,10 @@ const App = () => {
 
       setUser(data.user);
       setNotification({ message: "Account created!", type: "success" });
+      return { success: true };
     } catch (error) {
       setNotification({ message: error.message || "Signup failed", type: "error" });
-      throw error;
+      return { success: false, error };
     } finally {
       setLoading(false);
     }
@@ -114,9 +115,10 @@ const App = () => {
 
       setUser(data.user);
       setNotification({ message: "Login successful", type: "success" });
+      return { success: true };
     } catch (error) {
       setNotification({ message: error.message || "Login failed", type: "error" });
-      throw error;
+      return { success: false, error };
     } finally {
       setLoading(false);
     }
@@ -129,6 +131,8 @@ const App = () => {
         credentials: 'include'
       });
       setUser(null);
+      setPhotos([]);
+      setFilteredPhotos([]);
       setNotification({ message: "Logged out successfully", type: "success" });
     } catch (error) {
       setNotification({ message: "Logout failed", type: "error" });
@@ -155,8 +159,10 @@ const App = () => {
       setPhotos(prev => [...prev, data.photo]);
       setFilteredPhotos(prev => [...prev, data.photo]);
       setNotification({ message: "Upload successful!", type: "success" });
+      return { success: true };
     } catch (error) {
       setNotification({ message: error.message || "Upload failed", type: "error" });
+      return { success: false, error };
     } finally {
       setLoading(false);
     }
@@ -204,31 +210,53 @@ const App = () => {
         <Routes>
           <Route
             path="/signup"
-            element={!user ? <SignUpPage handleSignUp={handleSignUp} /> : <Navigate to="/" />}
+            element={!user ? <SignUpPage handleSignUp={handleSignUp} /> : <Navigate to="/" replace />}
           />
           <Route
             path="/login"
-            element={!user ? <LoginPage handleLogin={handleLogin} /> : <Navigate to="/" />}
+            element={!user ? <LoginPage handleLogin={handleLogin} /> : <Navigate to="/" replace />}
           />
           <Route
             path="/"
-            element={user ? (
-              <>
-                <SearchBar onSearch={setSearchQuery} />
-                <PhotoGallery
-                  photos={filteredPhotos.filter(photo =>
-                    photo?.title?.toLowerCase().includes(searchQuery.toLowerCase())
-                  )}
-                  onDeletePhoto={handleDeletePhoto}
-                />
-              </>
-            ) : <Navigate to="/login" />}
+            element={
+              <PrivateRoute user={user}>
+                <>
+                  <SearchBar onSearch={setSearchQuery} />
+                  <PhotoGallery
+                    photos={filteredPhotos.filter(photo =>
+                      photo?.title?.toLowerCase().includes(searchQuery.toLowerCase())
+                    )}
+                    onDeletePhoto={handleDeletePhoto}
+                  />
+                </>
+              </PrivateRoute>
+            }
           />
-          <Route path="/photo/:id" element={<PhotoDetail />} />
-          <Route element={<PrivateRoute user={user} />}>
-            <Route path="/upload" element={<UploadPhoto onUpload={handleUpload} />} />
-            <Route path="/profile/:userId" element={<ProfilePage user={user} />} />
-          </Route>
+          <Route 
+            path="/photo/:id" 
+            element={
+              <PrivateRoute user={user}>
+                <PhotoDetail />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/upload" 
+            element={
+              <PrivateRoute user={user}>
+                <UploadPhoto onUpload={handleUpload} />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/profile/:userId" 
+            element={
+              <PrivateRoute user={user}>
+                <ProfilePage user={user} />
+              </PrivateRoute>
+            } 
+          />
+          <Route path="*" element={<Navigate to={user ? "/" : "/login"} replace />} />
         </Routes>
       </main>
 
