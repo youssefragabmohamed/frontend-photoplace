@@ -198,7 +198,63 @@ const App = () => {
     }
   };
 
-  // ... [keep all your other handlers (handleUpload, handleDeletePhoto) exactly the same]
+  const handleUpload = async (newPhoto) => {
+    setLoading(true);
+    try {
+      const token = getAuthToken();
+      const formData = new FormData();
+      formData.append("photo", newPhoto.file);
+      formData.append("title", newPhoto.title);
+      formData.append("description", newPhoto.description);
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/upload`, {
+        method: "POST",
+        body: formData,
+        credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) throw new Error('Upload failed');
+      
+      const data = await response.json();
+      setPhotos(prev => [...prev, data.photo]);
+      setFilteredPhotos(prev => [...prev, data.photo]);
+      setNotification({ message: "Upload successful!", type: "success" });
+      return { success: true };
+    } catch (error) {
+      setNotification({ message: error.message || "Upload failed", type: "error" });
+      return { success: false, error };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeletePhoto = async (photoId) => {
+    setLoading(true);
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/${photoId}`, {
+        method: "DELETE",
+        credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) throw new Error('Delete failed');
+      
+      setPhotos(prev => prev.filter(photo => photo._id !== photoId));
+      setFilteredPhotos(prev => prev.filter(photo => photo._id !== photoId));
+      setNotification({ message: "Photo deleted", type: "success" });
+    } catch (error) {
+      setNotification({ message: error.message || "Delete failed", type: "error" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="App">
