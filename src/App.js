@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useLocation, NavLink } from "react-router-dom";
-import { faHome, faSearch, faPlusSquare, faUser, faCog } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faHome, faSearch, faPlusSquare, faUser, faCog, faUserCircle, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 import Header from "./components/Header";
 import SearchBar from "./components/SearchBar";
 import PhotoGallery from "./photocard/PhotoGallery";
@@ -21,15 +21,13 @@ const App = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
-  const [authToken, setAuthToken] = useState(null);
   const location = useLocation();
 
-  // Check active session on app load
   useEffect(() => {
     const checkSession = async () => {
       try {
         const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/session`, {
-          credentials: 'include' // Required for httpOnly cookies
+          credentials: 'include'
         });
 
         if (response.ok) {
@@ -46,7 +44,6 @@ const App = () => {
     checkSession();
   }, []);
 
-  // Fetch photos
   useEffect(() => {
     const fetchPhotos = async () => {
       setLoading(true);
@@ -55,29 +52,21 @@ const App = () => {
           credentials: 'include'
         });
         
-        if (!response.ok) {
-          throw new Error('Failed to load photos');
-        }
-
+        if (!response.ok) throw new Error('Failed to load photos');
+        
         const data = await response.json();
         setPhotos(data);
         setFilteredPhotos(data);
       } catch (error) {
-        setNotification({
-          message: error.message,
-          type: 'error'
-        });
+        setNotification({ message: error.message, type: 'error' });
       } finally {
         setLoading(false);
       }
     };
 
-    if (user) {
-      fetchPhotos();
-    }
+    if (user) fetchPhotos();
   }, [user]);
 
-  // Get active route for bottom nav
   const getActiveRoute = () => {
     const path = location.pathname;
     if (path === '/') return 'home';
@@ -87,7 +76,6 @@ const App = () => {
     return '';
   };
 
-  // Handle signup
   const handleSignUp = async (username, email, password) => {
     setLoading(true);
     try {
@@ -103,19 +91,14 @@ const App = () => {
 
       setUser(data.user);
       setNotification({ message: "Account created!", type: "success" });
-      return data;
     } catch (error) {
-      setNotification({
-        message: error.message || "Signup failed",
-        type: "error",
-      });
+      setNotification({ message: error.message || "Signup failed", type: "error" });
       throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle login
   const handleLogin = async (email, password) => {
     setLoading(true);
     try {
@@ -131,19 +114,14 @@ const App = () => {
 
       setUser(data.user);
       setNotification({ message: "Login successful", type: "success" });
-      return data;
     } catch (error) {
-      setNotification({
-        message: error.message || "Login failed",
-        type: "error",
-      });
+      setNotification({ message: error.message || "Login failed", type: "error" });
       throw error;
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle logout
   const handleLogout = async () => {
     try {
       await fetch(`${process.env.REACT_APP_API_URL}/api/auth/logout`, {
@@ -153,14 +131,10 @@ const App = () => {
       setUser(null);
       setNotification({ message: "Logged out successfully", type: "success" });
     } catch (error) {
-      setNotification({
-        message: "Logout failed",
-        type: "error"
-      });
+      setNotification({ message: "Logout failed", type: "error" });
     }
   };
 
-  // Handle photo upload
   const handleUpload = async (newPhoto) => {
     setLoading(true);
     try {
@@ -175,25 +149,19 @@ const App = () => {
         credentials: 'include'
       });
       
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
+      if (!response.ok) throw new Error('Upload failed');
       
       const data = await response.json();
       setPhotos(prev => [...prev, data.photo]);
       setFilteredPhotos(prev => [...prev, data.photo]);
       setNotification({ message: "Upload successful!", type: "success" });
     } catch (error) {
-      setNotification({
-        message: error.message || "Upload failed",
-        type: "error",
-      });
+      setNotification({ message: error.message || "Upload failed", type: "error" });
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle photo deletion
   const handleDeletePhoto = async (photoId) => {
     setLoading(true);
     try {
@@ -202,18 +170,13 @@ const App = () => {
         credentials: 'include'
       });
       
-      if (!response.ok) {
-        throw new Error('Delete failed');
-      }
+      if (!response.ok) throw new Error('Delete failed');
       
       setPhotos(prev => prev.filter(photo => photo._id !== photoId));
       setFilteredPhotos(prev => prev.filter(photo => photo._id !== photoId));
       setNotification({ message: "Photo deleted", type: "success" });
     } catch (error) {
-      setNotification({
-        message: error.message || "Delete failed",
-        type: "error",
-      });
+      setNotification({ message: error.message || "Delete failed", type: "error" });
     } finally {
       setLoading(false);
     }
@@ -224,8 +187,8 @@ const App = () => {
       <Header user={user} onLogout={handleLogout} />
       
       {loading && (
-        <div className="spinner-container">
-          <div className="spinner"></div>
+        <div className="loading-overlay glass-card">
+          <div className="loading-ring"></div>
         </div>
       )}
 
@@ -269,7 +232,6 @@ const App = () => {
         </Routes>
       </main>
 
-      {/* Mobile Bottom Navigation */}
       {user && (
         <nav className="bottom-nav">
           <NavLink 

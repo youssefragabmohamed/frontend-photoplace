@@ -1,47 +1,66 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUserCircle, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 
-const Header = ({ user, setUser }) => {
+const Header = ({ user, onLogout }) => {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userId");
-    setUser(null);
-    navigate("/login");
-  };
-
   return (
-    <header className="App-header">
-      <div className="logo">
-        <h1>My Photo Marketplace</h1>
+    <header className="header" style={{
+      background: "var(--surface)",
+      padding: "var(--space-md)",
+      boxShadow: "var(--shadow-sm)",
+      position: "sticky",
+      top: 0,
+      zIndex: 100
+    }}>
+      <div className="container flex" style={{ 
+        justifyContent: "space-between",
+        alignItems: "center"
+      }}>
+        <Link to="/" className="logo" style={{ 
+          textDecoration: "none",
+          color: "var(--primary)",
+          fontWeight: 600,
+          fontSize: "var(--text-xl)"
+        }}>
+          PhotoMarket
+        </Link>
+
+        {user ? (
+          <div className="flex" style={{ gap: "var(--space-md)", alignItems: "center" }}>
+            <div className="user-info flex" style={{ alignItems: "center", gap: "var(--space-sm)" }}>
+              <FontAwesomeIcon icon={faUserCircle} style={{ fontSize: "1.5rem" }} />
+              <span style={{ fontWeight: 500 }}>{user.username}</span>
+            </div>
+            <button 
+              onClick={onLogout}
+              className="btn btn-outline"
+              style={{ padding: "var(--space-xs) var(--space-sm)" }}
+            >
+              <FontAwesomeIcon icon={faSignOutAlt} />
+            </button>
+          </div>
+        ) : (
+          <div className="flex" style={{ gap: "var(--space-sm)" }}>
+            <Link 
+              to="/login" 
+              className="btn btn-outline"
+              style={{ padding: "var(--space-xs) var(--space-sm)" }}
+            >
+              Login
+            </Link>
+            <Link 
+              to="/signup" 
+              className="btn btn-primary"
+              style={{ padding: "var(--space-xs) var(--space-sm)" }}
+            >
+              Sign Up
+            </Link>
+          </div>
+        )}
       </div>
-      <div className="dropdown">
-        <button className="dropbtn">Menu</button>
-        <div className="dropdown-content">
-          <Link to="/">Home</Link>
-          <Link to="/marketplace">Marketplace</Link>
-          {user ? (
-            <>
-              <Link to={`/profile/${user.userId}`}>Profile</Link>
-              <Link to="/upload">Upload Photo</Link>
-              <button onClick={handleLogout} className="logout-button">
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <Link to="/login">Login</Link>
-              <Link to="/signup">Sign Up</Link>
-            </>
-          )}
-        </div>
-      </div>
-      {user && (
-        <div className="user-info">
-          <span>Welcome, {user.username}</span>
-        </div>
-      )}
     </header>
   );
 };

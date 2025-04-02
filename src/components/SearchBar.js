@@ -1,32 +1,34 @@
 import React, { useState } from "react";
 
-const SearchBar = ({ onSearch, onFilter }) => {
+const SearchBar = ({ onSearch }) => {
   const [query, setQuery] = useState("");
 
   const handleChange = (e) => {
-    setQuery(e.target.value);
-    onSearch(e.target.value);
-  };
-
-  const handleFilterChange = (e) => {
-    onFilter(e.target.value);
+    const value = e.target.value;
+    setQuery(value);
+    onSearch(value);
   };
 
   return (
-    <div className="search-bar">
-      <input
-        type="text"
-        value={query}
-        onChange={handleChange}
-        placeholder="Search photos by title..."
-        className="search-input"
-      />
-      <select onChange={handleFilterChange} className="filter-select">
-        <option value="">Filter by</option>
-        <option value="newest">Newest</option>
-        <option value="popular">Most Popular</option>
-        <option value="price">Price Range</option>
-      </select>
+    <div className="container" style={{ marginBottom: "var(--space-lg)" }}>
+      <div className="flex" style={{ 
+        gap: "var(--space-md)",
+        alignItems: "center"
+      }}>
+        <input
+          type="text"
+          value={query}
+          onChange={handleChange}
+          placeholder="Search photos..."
+          className="form-input"
+          style={{ flex: 1 }}
+        />
+        <select className="form-input" style={{ width: "150px" }}>
+          <option value="">All</option>
+          <option value="newest">Newest</option>
+          <option value="popular">Popular</option>
+        </select>
+      </div>
     </div>
   );
 };

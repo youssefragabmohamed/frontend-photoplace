@@ -1,90 +1,78 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
 
-const ProfilePage = () => {
-  const [user, setUser] = useState(null);
-  const [photos, setPhotos] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const navigate = useNavigate();
+const UploadPhoto = ({ onUpload }) => {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [file, setFile] = useState(null);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    const userId = localStorage.getItem("userId");
-    if (!userId) {
-      navigate("/login");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    
+    if (!localStorage.getItem("token")) {
+      setError("Please log in to upload photos.");
       return;
     }
-    fetchUserProfile(userId);
-    fetchUserPhotos(userId);
-  }, [navigate]);
 
-  const fetchUserProfile = async (userId) => {
-    setLoading(true);
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/${userId}/profile`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      if (!data?._id) throw new Error("Invalid user data");
-      setUser(data);
-    } catch (error) {
-      console.error("Profile fetch error:", error);
-      setError(error.message);
-      if (error.message.includes("401")) navigate("/login");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("description", description);
+    formData.append("photo", file);
 
-  const fetchUserPhotos = async (userId) => {
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/api/photos?userId=${userId}`
-      );
-      if (!response.ok) throw new Error("Failed to fetch photos");
-      const data = await response.json();
-      setPhotos(Array.isArray(data) ? data : []);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/upload`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error((await response.json()).message || "Upload failed");
+      onUpload((await response.json()).photo);
+      setTitle("");
+      setDescription("");
+      setFile(null);
     } catch (error) {
-      console.error("Photos fetch error:", error);
       setError(error.message);
     }
   };
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userId");
-    navigate("/login");
-  };
-
-  if (loading) return <div className="profile-container">Loading...</div>;
-  if (error) return <div className="profile-container">Error: {error}</div>;
 
   return (
-    <div className="profile-container">
-      {user && (
-        <>
-          <h2>{user.username}'s Profile</h2>
-          <p>Email: {user.email}</p>
-          <button onClick={handleLogout} className="logout-btn">
-            Log Out
+    <div className="container">
+      <div className="card" style={{ padding: "var(--space-lg)" }}>
+        <h2>Upload Photo</h2>
+        {error && <div className="notification error" style={{ marginBottom: "var(--space-md)" }}>{error}</div>}
+        
+        <form onSubmit={handleSubmit} className="grid" style={{ gap: "var(--space-md)" }}>
+          <input
+            type="text"
+            placeholder="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="form-input"
+            required
+          />
+          <textarea
+            placeholder="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="form-input"
+            style={{ minHeight: "100px" }}
+          />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setFile(e.target.files[0])}
+            className="form-input"
+            required
+          />
+          <button type="submit" className="btn btn-primary">
+            Upload
           </button>
-          <div className="user-photos">
-            {photos.length > 0 ? (
-              photos.map((photo) => (
-                <div key={photo._id} className="photo-card">
-                  <img src={photo.url} alt={photo.title} />
-                  <p>{photo.title}</p>
-                </div>
-              ))
-            ) : (
-              <p>No photos uploaded yet</p>
-            )}
-          </div>
-        </>
-      )}
+        </form>
+      </div>
     </div>
   );
 };
 
-export default ProfilePage;
+export default UploadPhoto;

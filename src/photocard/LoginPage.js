@@ -17,7 +17,7 @@ const LoginPage = ({ setUser }) => {
     setError(null);
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/login`, { // Use environment variable
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -26,9 +26,10 @@ const LoginPage = ({ setUser }) => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Login failed");
 
-      localStorage.setItem("user", JSON.stringify(data.user)); // Save user data to localStorage
-      setUser(data.user); // Update user state in your app
-      navigate("/"); // Redirect to the home page
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userId", data.user._id);
+      setUser(data.user);
+      navigate("/");
     } catch (error) {
       setError(error.message);
     } finally {
@@ -36,42 +37,47 @@ const LoginPage = ({ setUser }) => {
     }
   };
 
-  const handleSocialLogin = (provider) => {
-    alert(`Sign in with ${provider} clicked (implement backend flow)`);
-  };
-
   return (
-    <div className="auth-container">
-      <h2>Log In</h2>
-      {error && <p className="error-message">{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          onChange={handleChange}
-          required
-        />
-        <button type="submit" disabled={loading}>
-          {loading ? "Logging in..." : "Log In"}
-        </button>
-      </form>
-      <div className="social-login">
-        <button onClick={() => handleSocialLogin("Google")} className="google-btn">
-          Log in with Google
-        </button>
-        <button onClick={() => handleSocialLogin("Facebook")} className="facebook-btn">
-          Log in with Facebook
-        </button>
+    <div className="container">
+      <div className="card" style={{ maxWidth: "400px", margin: "var(--space-xl) auto", padding: "var(--space-lg)" }}>
+        <h1 style={{ textAlign: "center", marginBottom: "var(--space-lg)" }}>Log In</h1>
+        
+        {error && (
+          <div className="notification error" style={{ marginBottom: "var(--space-md)" }}>
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="grid" style={{ gap: "var(--space-md)" }}>
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            onChange={handleChange}
+            className="form-input"
+            required
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            onChange={handleChange}
+            className="form-input"
+            required
+          />
+          <button 
+            type="submit" 
+            className="btn btn-primary"
+            disabled={loading}
+          >
+            {loading ? "Logging in..." : "Log In"}
+          </button>
+        </form>
+
+        <div style={{ marginTop: "var(--space-lg)", textAlign: "center" }}>
+          <p className="text-muted">Don't have an account? <a href="/signup" style={{ color: "var(--primary)" }}>Sign up</a></p>
+        </div>
       </div>
-      <p>Don't have an account? <a href="/signup">Sign up</a></p>
     </div>
   );
 };

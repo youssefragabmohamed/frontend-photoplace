@@ -31,43 +31,59 @@ const SignUpPage = ({ handleSignUp }) => {
   };
 
   return (
-    <div className="auth-container">
-      <h2>Sign Up</h2>
-      {error && <p className="error-message">{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          name="username"
-          placeholder="Username"
-          value={formData.username}
-          onChange={handleChange}
-          required
-          minLength={3}
-        />
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-          minLength={6}
-        />
-        <button type="submit" disabled={loading}>
-          {loading ? "Signing up..." : "Sign Up"}
-        </button>
-      </form>
-      <p>
-        Already have an account? <a href="/login">Log in</a>
-      </p>
+    <div className="container">
+      <div className="card" style={{ maxWidth: "400px", margin: "var(--space-xl) auto", padding: "var(--space-lg)" }}>
+        <h1 style={{ textAlign: "center", marginBottom: "var(--space-lg)" }}>Sign Up</h1>
+        
+        {error && (
+          <div className="notification error" style={{ marginBottom: "var(--space-md)" }}>
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="grid" style={{ gap: "var(--space-md)" }}>
+          <input
+            type="text"
+            name="username"
+            placeholder="Username"
+            value={formData.username}
+            onChange={handleChange}
+            className="form-input"
+            required
+            minLength={3}
+          />
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleChange}
+            className="form-input"
+            required
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
+            className="form-input"
+            required
+            minLength={6}
+          />
+          <button 
+            type="submit" 
+            className="btn btn-primary"
+            disabled={loading}
+          >
+            {loading ? "Creating account..." : "Sign Up"}
+          </button>
+        </form>
+
+        <div style={{ marginTop: "var(--space-lg)", textAlign: "center" }}>
+          <p className="text-muted">Already have an account? <a href="/login" style={{ color: "var(--primary)" }}>Log in</a></p>
+        </div>
+      </div>
     </div>
   );
 };
