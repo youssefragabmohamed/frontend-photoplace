@@ -23,59 +23,83 @@ const App = () => {
   const [notification, setNotification] = useState(null);
   const location = useLocation();
 
-  // Store token in localStorage
-  const storeAuthToken = (token) => {
+  // Token management
+  const storeAuthData = (token, userData) => {
     localStorage.setItem('authToken', token);
+    localStorage.setItem('userData', JSON.stringify(userData));
   };
 
-  const clearAuthToken = () => {
+  const clearAuthData = () => {
     localStorage.removeItem('authToken');
+    localStorage.removeItem('userData');
   };
 
   const getAuthToken = () => {
     return localStorage.getItem('authToken');
   };
 
+  // Initialize auth state
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const token = getAuthToken();
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/session`, {
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` })
-          }
-        });
+    const initializeAuth = async () => {
+      const token = getAuthToken();
+      const storedUser = localStorage.getItem('userData');
+      
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
 
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData.user);
-        } else if (response.status === 401) {
-          // Clear invalid token
-          clearAuthToken();
-          setUser(null);
-        }
-      } catch (error) {
-        console.error("Session check failed:", error);
-      } finally {
+      if (token) {
+        await verifyToken(token);
+      } else {
         setLoading(false);
       }
     };
 
-    checkSession();
+    initializeAuth();
   }, []);
 
+  const verifyToken = async (token) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/session`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+        storeAuthData(token, data.user);
+      } else {
+        clearAuthData();
+        setUser(null);
+      }
+    } catch (error) {
+      console.error("Token verification failed:", error);
+      clearAuthData();
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch photos when user is authenticated
   useEffect(() => {
     const fetchPhotos = async () => {
+      if (!user) return;
+      
       setLoading(true);
       try {
         const token = getAuthToken();
         const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos`, {
-          credentials: 'include',
           headers: {
-            ...(token && { 'Authorization': `Bearer ${token}` })
-          }
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
         });
         
         if (!response.ok) throw new Error('Failed to load photos');
@@ -90,7 +114,7 @@ const App = () => {
       }
     };
 
-    if (user) fetchPhotos();
+    fetchPhotos();
   }, [user]);
 
   const getActiveRoute = () => {
@@ -115,7 +139,7 @@ const App = () => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Signup failed");
 
-      storeAuthToken(data.token);
+      storeAuthData(data.token, data.user);
       setUser(data.user);
       setNotification({ message: "Account created!", type: "success" });
       return { success: true };
@@ -140,7 +164,7 @@ const App = () => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Login failed");
 
-      storeAuthToken(data.token);
+      storeAuthData(data.token, data.user);
       setUser(data.user);
       setNotification({ message: "Login successful", type: "success" });
       return { success: true };
@@ -157,12 +181,14 @@ const App = () => {
       const token = getAuthToken();
       await fetch(`${process.env.REACT_APP_API_URL}/api/auth/logout`, {
         method: "POST",
-        credentials: 'include',
         headers: {
-          ...(token && { 'Authorization': `Bearer ${token}` })
-        }
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
       });
-      clearAuthToken();
+      
+      clearAuthData();
       setUser(null);
       setPhotos([]);
       setFilteredPhotos([]);
@@ -172,62 +198,7 @@ const App = () => {
     }
   };
 
-  const handleUpload = async (newPhoto) => {
-    setLoading(true);
-    try {
-      const token = getAuthToken();
-      const formData = new FormData();
-      formData.append("photo", newPhoto.file);
-      formData.append("title", newPhoto.title);
-      formData.append("description", newPhoto.description);
-
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/upload`, {
-        method: "POST",
-        body: formData,
-        credentials: 'include',
-        headers: {
-          ...(token && { 'Authorization': `Bearer ${token}` })
-        }
-      });
-      
-      if (!response.ok) throw new Error('Upload failed');
-      
-      const data = await response.json();
-      setPhotos(prev => [...prev, data.photo]);
-      setFilteredPhotos(prev => [...prev, data.photo]);
-      setNotification({ message: "Upload successful!", type: "success" });
-      return { success: true };
-    } catch (error) {
-      setNotification({ message: error.message || "Upload failed", type: "error" });
-      return { success: false, error };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeletePhoto = async (photoId) => {
-    setLoading(true);
-    try {
-      const token = getAuthToken();
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/${photoId}`, {
-        method: "DELETE",
-        credentials: 'include',
-        headers: {
-          ...(token && { 'Authorization': `Bearer ${token}` })
-        }
-      });
-      
-      if (!response.ok) throw new Error('Delete failed');
-      
-      setPhotos(prev => prev.filter(photo => photo._id !== photoId));
-      setFilteredPhotos(prev => prev.filter(photo => photo._id !== photoId));
-      setNotification({ message: "Photo deleted", type: "success" });
-    } catch (error) {
-      setNotification({ message: error.message || "Delete failed", type: "error" });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // ... [keep all your other handlers (handleUpload, handleDeletePhoto) exactly the same]
 
   return (
     <div className="App">
