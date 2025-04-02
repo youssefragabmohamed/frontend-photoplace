@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useLocation, NavLink } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHome, faSearch, faPlusSquare, faUser, faCog, faUserCircle, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faSearch, faPlusSquare, faUser, faCog } from '@fortawesome/free-solid-svg-icons';
 import Header from "./components/Header";
 import SearchBar from "./components/SearchBar";
 import PhotoGallery from "./photocard/PhotoGallery";
@@ -23,16 +23,38 @@ const App = () => {
   const [notification, setNotification] = useState(null);
   const location = useLocation();
 
+  // Store token in localStorage
+  const storeAuthToken = (token) => {
+    localStorage.setItem('authToken', token);
+  };
+
+  const clearAuthToken = () => {
+    localStorage.removeItem('authToken');
+  };
+
+  const getAuthToken = () => {
+    return localStorage.getItem('authToken');
+  };
+
   useEffect(() => {
     const checkSession = async () => {
       try {
+        const token = getAuthToken();
         const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/session`, {
-          credentials: 'include'
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` })
+          }
         });
 
         if (response.ok) {
           const userData = await response.json();
-          setUser(userData);
+          setUser(userData.user);
+        } else if (response.status === 401) {
+          // Clear invalid token
+          clearAuthToken();
+          setUser(null);
         }
       } catch (error) {
         console.error("Session check failed:", error);
@@ -48,8 +70,12 @@ const App = () => {
     const fetchPhotos = async () => {
       setLoading(true);
       try {
+        const token = getAuthToken();
         const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos`, {
-          credentials: 'include'
+          credentials: 'include',
+          headers: {
+            ...(token && { 'Authorization': `Bearer ${token}` })
+          }
         });
         
         if (!response.ok) throw new Error('Failed to load photos');
@@ -89,6 +115,7 @@ const App = () => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Signup failed");
 
+      storeAuthToken(data.token);
       setUser(data.user);
       setNotification({ message: "Account created!", type: "success" });
       return { success: true };
@@ -113,6 +140,7 @@ const App = () => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Login failed");
 
+      storeAuthToken(data.token);
       setUser(data.user);
       setNotification({ message: "Login successful", type: "success" });
       return { success: true };
@@ -126,10 +154,15 @@ const App = () => {
 
   const handleLogout = async () => {
     try {
+      const token = getAuthToken();
       await fetch(`${process.env.REACT_APP_API_URL}/api/auth/logout`, {
         method: "POST",
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        }
       });
+      clearAuthToken();
       setUser(null);
       setPhotos([]);
       setFilteredPhotos([]);
@@ -142,6 +175,7 @@ const App = () => {
   const handleUpload = async (newPhoto) => {
     setLoading(true);
     try {
+      const token = getAuthToken();
       const formData = new FormData();
       formData.append("photo", newPhoto.file);
       formData.append("title", newPhoto.title);
@@ -150,7 +184,10 @@ const App = () => {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/upload`, {
         method: "POST",
         body: formData,
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        }
       });
       
       if (!response.ok) throw new Error('Upload failed');
@@ -171,9 +208,13 @@ const App = () => {
   const handleDeletePhoto = async (photoId) => {
     setLoading(true);
     try {
+      const token = getAuthToken();
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/${photoId}`, {
         method: "DELETE",
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        }
       });
       
       if (!response.ok) throw new Error('Delete failed');
