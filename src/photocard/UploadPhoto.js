@@ -1,79 +1,197 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTimes, faCloudUploadAlt, faImage } from '@fortawesome/free-solid-svg-icons';
 
-const UploadPhoto = ({ onUpload }) => {
+const UploadPhoto = ({ onUpload, onClose }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
   const [error, setError] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (!selectedFile) return;
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(selectedFile.type)) {
+      setError("Please upload a valid image file (JPEG, PNG, GIF, WEBP)");
+      return;
+    }
+
+    // Validate file size (10MB)
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      setError("File size too large (max 10MB)");
+      return;
+    }
+
+    setFile(selectedFile);
+    setError("");
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreview(reader.result);
+    };
+    reader.readAsDataURL(selectedFile);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      fileInputRef.current.files = e.dataTransfer.files;
+      handleFileChange({ target: { files: e.dataTransfer.files } });
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    
+    if (!file) {
+      setError("Please select an image file");
+      return;
+    }
 
-    // 1. Get the JWT token from localStorage
     const token = localStorage.getItem("token");
     if (!token) {
       setError("Please log in to upload photos.");
       return;
     }
 
-    // 2. Prepare FormData (exclude userId; backend gets it from the token)
+    setIsUploading(true);
+
     const formData = new FormData();
     formData.append("title", title);
     formData.append("description", description);
-    formData.append("photo", file); // File from input
+    formData.append("photo", file);
 
     try {
-      // 3. Send request with the token in headers
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/upload`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`, // Critical for MongoDB auth
+          Authorization: `Bearer ${token}`,
         },
-        body: formData, // No need for Content-Type header with FormData
+        body: formData,
       });
 
       const data = await response.json();
 
-      // 4. Handle errors (e.g., invalid token, MongoDB validation failed)
       if (!response.ok) {
-        throw new Error(data.message || "Upload failed. Check your authentication.");
+        throw new Error(data.message || "Upload failed. Please try again.");
       }
 
-      // 5. Success: Update parent component and reset form
       onUpload(data.photo);
-      setTitle("");
-      setDescription("");
-      setFile(null);
+      resetForm();
+      if (onClose) onClose();
     } catch (error) {
       setError(error.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setFile(null);
+    setPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
   return (
-    <div className="upload-photo">
-      <h2>Upload Photo</h2>
-      {error && <p className="error-message">{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-        />
-        <textarea
-          placeholder="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setFile(e.target.files[0])}
-          required
-        />
-        <button type="submit">Upload</button>
+    <div className="upload-photo-container">
+      <div className="upload-header">
+        <h2>Upload Photo</h2>
+        {onClose && (
+          <button onClick={onClose} className="close-btn">
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
+        )}
+      </div>
+
+      {error && <div className="error-message">{error}</div>}
+
+      <form onSubmit={handleSubmit} className="upload-form">
+        {preview ? (
+          <div className="preview-container">
+            <img src={preview} alt="Preview" className="preview-image" />
+            <button 
+              type="button" 
+              onClick={() => {
+                setPreview(null);
+                setFile(null);
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = "";
+                }
+              }}
+              className="replace-btn"
+            >
+              Replace Image
+            </button>
+          </div>
+        ) : (
+          <div 
+            className="dropzone"
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current.click()}
+          >
+            <FontAwesomeIcon icon={faCloudUploadAlt} size="3x" />
+            <p>Drag & drop an image here, or click to select</p>
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*"
+              onChange={handleFileChange}
+              style={{ display: "none" }}
+              required
+            />
+          </div>
+        )}
+
+        <div className="form-group">
+          <label htmlFor="title">Title</label>
+          <input
+            id="title"
+            type="text"
+            placeholder="Give your photo a title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="description">Description (Optional)</label>
+          <textarea
+            id="description"
+            placeholder="Tell us about this photo"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows="3"
+          />
+        </div>
+
+        <button 
+          type="submit" 
+          className="submit-btn"
+          disabled={isUploading}
+        >
+          {isUploading ? "Uploading..." : "Upload Photo"}
+        </button>
       </form>
     </div>
   );

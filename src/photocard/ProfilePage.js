@@ -1,78 +1,279 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useParams, Link } from "react-router-dom";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEllipsis, faBookmark, faHeart, faComment } from '@fortawesome/free-solid-svg-icons';
+import UploadPhoto from "./UploadPhoto";
 
-const UploadPhoto = ({ onUpload }) => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [file, setFile] = useState(null);
-  const [error, setError] = useState("");
+const ProfilePage = ({ user }) => {
+  const { userId } = useParams();
+  const [profileUser, setProfileUser] = useState(null);
+  const [photos, setPhotos] = useState([]);
+  const [activeTab, setActiveTab] = useState('posts');
+  const [isCurrentUser, setIsCurrentUser] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    
-    if (!localStorage.getItem("token")) {
-      setError("Please log in to upload photos.");
-      return;
-    }
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      setLoading(true);
+      try {
+        // Fetch user profile data
+        const userRes = await fetch(`${process.env.REACT_APP_API_URL}/api/profile/${userId}`);
+        if (!userRes.ok) throw new Error('Failed to fetch profile');
+        const userData = await userRes.json();
+        
+        // Fetch user photos
+        const photosRes = await fetch(`${process.env.REACT_APP_API_URL}/api/profile/${userId}/photos`);
+        if (!photosRes.ok) throw new Error('Failed to fetch photos');
+        const photosData = await photosRes.json();
+        
+        setProfileUser(userData.user);
+        setPhotos(photosData);
+        setIsCurrentUser(user && user._id === userId);
+      } catch (error) {
+        console.error("Profile fetch error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("description", description);
-    formData.append("photo", file);
+    fetchProfileData();
+  }, [userId, user]);
 
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/upload`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        body: formData,
-      });
-
-      if (!response.ok) throw new Error((await response.json()).message || "Upload failed");
-      onUpload((await response.json()).photo);
-      setTitle("");
-      setDescription("");
-      setFile(null);
-    } catch (error) {
-      setError(error.message);
-    }
+  const handleUploadSuccess = (newPhoto) => {
+    setPhotos(prev => [newPhoto, ...prev]);
+    setProfileUser(prev => ({
+      ...prev,
+      photosCount: prev.photosCount + 1
+    }));
+    setShowUploadModal(false);
   };
+
+  if (loading) {
+    return (
+      <div className="container">
+        <div className="placeholder-content">
+          <div className="placeholder-line" style={{ height: "80px", width: "80px", borderRadius: "50%" }}></div>
+          <div className="placeholder-line short"></div>
+          <div className="placeholder-line medium"></div>
+          <div className="placeholder-line long"></div>
+          <div className="placeholder-line" style={{ height: "40px", marginTop: "var(--space-lg)" }}></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profileUser) {
+    return <div className="container">User not found</div>;
+  }
 
   return (
     <div className="container">
-      <div className="card" style={{ padding: "var(--space-lg)" }}>
-        <h2>Upload Photo</h2>
-        {error && <div className="notification error" style={{ marginBottom: "var(--space-md)" }}>{error}</div>}
-        
-        <form onSubmit={handleSubmit} className="grid" style={{ gap: "var(--space-md)" }}>
-          <input
-            type="text"
-            placeholder="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="form-input"
-            required
-          />
-          <textarea
-            placeholder="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="form-input"
-            style={{ minHeight: "100px" }}
-          />
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setFile(e.target.files[0])}
-            className="form-input"
-            required
-          />
-          <button type="submit" className="btn btn-primary">
-            Upload
-          </button>
-        </form>
+      {/* Profile Header */}
+      <div className="profile-header" style={{ marginBottom: "var(--space-xl)" }}>
+        <div className="flex" style={{ gap: "var(--space-xl)", alignItems: "flex-start" }}>
+          <div className="avatar-container" style={{ position: "relative" }}>
+            <img 
+              src={profileUser.profilePic || '/default-profile.jpg'} 
+              alt={profileUser.username} 
+              className="avatar" 
+              style={{ width: "100px", height: "100px" }}
+            />
+          </div>
+          
+          <div className="profile-stats" style={{ flex: 1 }}>
+            <div className="flex" style={{ alignItems: "center", gap: "var(--space-lg)", marginBottom: "var(--space-md)" }}>
+              <h2 style={{ fontSize: "var(--text-xl)", margin: 0 }}>{profileUser.username}</h2>
+              {isCurrentUser ? (
+                <>
+                  <button 
+                    className="btn btn-outline"
+                    onClick={() => setShowUploadModal(true)}
+                    style={{ padding: "var(--space-xs) var(--space-md)" }}
+                  >
+                    Upload Photo
+                  </button>
+                  <button className="btn btn-outline" style={{ padding: "6px" }}>
+                    <FontAwesomeIcon icon={faEllipsis} />
+                  </button>
+                </>
+              ) : (
+                <button 
+                  className="btn btn-primary"
+                  style={{ padding: "var(--space-xs) var(--space-md)" }}
+                >
+                  Follow
+                </button>
+              )}
+            </div>
+            
+            <div className="flex" style={{ gap: "var(--space-xl)", marginBottom: "var(--space-md)" }}>
+              <div className="text-center">
+                <strong>{profileUser.photosCount || 0}</strong>
+                <p className="text-muted">Posts</p>
+              </div>
+              <div className="text-center">
+                <strong>{profileUser.followersCount || 0}</strong>
+                <p className="text-muted">Followers</p>
+              </div>
+              <div className="text-center">
+                <strong>{profileUser.followingCount || 0}</strong>
+                <p className="text-muted">Following</p>
+              </div>
+            </div>
+            
+            <div>
+              <h3 style={{ fontSize: "var(--text-base)", marginBottom: "var(--space-xs)" }}>
+                {profileUser.fullName || profileUser.username}
+              </h3>
+              <p className="text-muted">{profileUser.bio || "No bio yet"}</p>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Profile Tabs */}
+      <div className="profile-tabs" style={{ borderBottom: "1px solid var(--glass-border)", marginBottom: "var(--space-lg)" }}>
+        <div className="flex" style={{ justifyContent: "center", gap: "var(--space-xl)" }}>
+          <button 
+            className={`tab-btn ${activeTab === 'posts' ? 'active' : ''}`}
+            onClick={() => setActiveTab('posts')}
+            style={{ 
+              padding: "var(--space-sm) 0",
+              position: "relative",
+              background: "none",
+              border: "none",
+              color: activeTab === 'posts' ? "var(--text-primary)" : "var(--text-secondary)",
+              fontWeight: activeTab === 'posts' ? "600" : "400"
+            }}
+          >
+            Posts
+            {activeTab === 'posts' && (
+              <div style={{
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: "2px",
+                background: "var(--primary)"
+              }}></div>
+            )}
+          </button>
+          {isCurrentUser && (
+            <button 
+              className={`tab-btn ${activeTab === 'saved' ? 'active' : ''}`}
+              onClick={() => setActiveTab('saved')}
+              style={{ 
+                padding: "var(--space-sm) 0",
+                position: "relative",
+                background: "none",
+                border: "none",
+                color: activeTab === 'saved' ? "var(--text-primary)" : "var(--text-secondary)",
+                fontWeight: activeTab === 'saved' ? "600" : "400"
+              }}
+            >
+              <FontAwesomeIcon icon={faBookmark} />
+              {activeTab === 'saved' && (
+                <div style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: "2px",
+                  background: "var(--primary)"
+                }}></div>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Photo Grid */}
+      <div className="photo-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)", gap: "var(--space-sm)" }}>
+        {photos.map(photo => (
+          <div key={photo._id} className="photo-card" style={{ aspectRatio: "1/1", position: "relative" }}>
+            <img 
+              src={photo.url} 
+              alt={photo.title} 
+              className="photo-img" 
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+            
+            {/* Photo Hover Overlay */}
+            <div className="photo-overlay" style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: "rgba(0,0,0,0.3)",
+              opacity: 0,
+              transition: "var(--transition-normal)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: "var(--space-xl)",
+              color: "white"
+            }}>
+              <div className="flex" style={{ alignItems: "center", gap: "var(--space-xs)" }}>
+                <FontAwesomeIcon icon={faHeart} />
+                <span>{photo.likes || 0}</span>
+              </div>
+              <div className="flex" style={{ alignItems: "center", gap: "var(--space-xs)" }}>
+                <FontAwesomeIcon icon={faComment} />
+                <span>{photo.commentsCount || 0}</span>
+              </div>
+            </div>
+            
+            <Link 
+              to={`/photo/${photo._id}`} 
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 1
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.previousElementSibling.style.opacity = "1";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.previousElementSibling.style.opacity = "0";
+              }}
+            ></Link>
+          </div>
+        ))}
+      </div>
+
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <div className="modal-overlay" style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "rgba(0,0,0,0.5)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 1000
+        }}>
+          <div className="card" style={{ 
+            width: "100%",
+            maxWidth: "500px",
+            padding: "var(--space-lg)"
+          }}>
+            <UploadPhoto 
+              onUpload={handleUploadSuccess} 
+              onClose={() => setShowUploadModal(false)} 
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default UploadPhoto;
+export default ProfilePage;
