@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Routes, Route, Navigate, useLocation, NavLink } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome, faSearch, faPlusSquare, faUser, faCog } from '@fortawesome/free-solid-svg-icons';
 import Header from "./components/Header";
@@ -21,7 +21,9 @@ const App = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
+  const [navLock, setNavLock] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Token management
   const storeAuthData = (token, userData) => {
@@ -52,6 +54,9 @@ const App = () => {
         await verifyToken(token);
       } else {
         setLoading(false);
+        if (location.pathname !== '/login' && location.pathname !== '/signup') {
+          navigate('/login', { replace: true });
+        }
       }
     };
 
@@ -73,14 +78,20 @@ const App = () => {
         const data = await response.json();
         setUser(data.user);
         storeAuthData(token, data.user);
+        // Redirect if coming from login
+        if (location.state?.from) {
+          navigate(location.state.from, { replace: true });
+        }
       } else {
         clearAuthData();
         setUser(null);
+        navigate('/login', { replace: true });
       }
     } catch (error) {
       console.error("Token verification failed:", error);
       clearAuthData();
       setUser(null);
+      navigate('/login', { replace: true });
     } finally {
       setLoading(false);
     }
@@ -126,6 +137,14 @@ const App = () => {
     return '';
   };
 
+  const handleNavClick = (path) => {
+    if (!navLock && location.pathname !== path) {
+      setNavLock(true);
+      navigate(path);
+      setTimeout(() => setNavLock(false), 500);
+    }
+  };
+
   const handleSignUp = async (formData) => {
     setLoading(true);
     try {
@@ -142,6 +161,7 @@ const App = () => {
       storeAuthData(data.token, data.user);
       setUser(data.user);
       setNotification({ message: "Account created!", type: "success" });
+      navigate('/', { replace: true });
       return { success: true, data };
     } catch (error) {
       setNotification({ message: error.message || "Signup failed", type: "error" });
@@ -167,6 +187,7 @@ const App = () => {
       storeAuthData(data.token, data.user);
       setUser(data.user);
       setNotification({ message: "Login successful", type: "success" });
+      navigate(location.state?.from || '/', { replace: true });
       return { success: true, data };
     } catch (error) {
       setNotification({ message: error.message || "Login failed", type: "error" });
@@ -193,6 +214,7 @@ const App = () => {
       setPhotos([]);
       setFilteredPhotos([]);
       setNotification({ message: "Logged out successfully", type: "success" });
+      navigate('/login', { replace: true });
     } catch (error) {
       setNotification({ message: "Logout failed", type: "error" });
     }
@@ -331,34 +353,34 @@ const App = () => {
 
       {user && (
         <nav className="bottom-nav">
-          <NavLink 
-            to="/" 
+          <div 
+            onClick={() => handleNavClick('/')}
             className={`nav-item ${getActiveRoute() === 'home' ? 'active' : ''}`}
           >
             <FontAwesomeIcon icon={faHome} />
             <span>Home</span>
-          </NavLink>
-          <NavLink 
-            to="/search" 
+          </div>
+          <div 
+            onClick={() => handleNavClick('/search')}
             className={`nav-item ${getActiveRoute() === 'search' ? 'active' : ''}`}
           >
             <FontAwesomeIcon icon={faSearch} />
             <span>Search</span>
-          </NavLink>
-          <NavLink 
-            to="/upload" 
+          </div>
+          <div 
+            onClick={() => handleNavClick('/upload')}
             className={`nav-item ${getActiveRoute() === 'upload' ? 'active' : ''}`}
           >
             <FontAwesomeIcon icon={faPlusSquare} />
             <span>Upload</span>
-          </NavLink>
-          <NavLink 
-            to={`/profile/${user._id}`} 
+          </div>
+          <div 
+            onClick={() => handleNavClick(`/profile/${user._id}`)}
             className={`nav-item ${getActiveRoute() === 'profile' ? 'active' : ''}`}
           >
             <FontAwesomeIcon icon={faUser} />
             <span>Profile</span>
-          </NavLink>
+          </div>
           <div 
             className="nav-item settings"
             onClick={() => setNotification({ message: "Settings coming soon!", type: "info" })}
