@@ -126,13 +126,13 @@ const App = () => {
     return '';
   };
 
-  const handleSignUp = async (username, email, password) => {
+  const handleSignUp = async (formData) => {
     setLoading(true);
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify(formData),
         credentials: 'include'
       });
 
@@ -142,10 +142,10 @@ const App = () => {
       storeAuthData(data.token, data.user);
       setUser(data.user);
       setNotification({ message: "Account created!", type: "success" });
-      return { success: true };
+      return { success: true, data };
     } catch (error) {
       setNotification({ message: error.message || "Signup failed", type: "error" });
-      return { success: false, error };
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -167,10 +167,10 @@ const App = () => {
       storeAuthData(data.token, data.user);
       setUser(data.user);
       setNotification({ message: "Login successful", type: "success" });
-      return { success: true };
+      return { success: true, data };
     } catch (error) {
       setNotification({ message: error.message || "Login failed", type: "error" });
-      return { success: false, error };
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -222,10 +222,10 @@ const App = () => {
       setPhotos(prev => [...prev, data.photo]);
       setFilteredPhotos(prev => [...prev, data.photo]);
       setNotification({ message: "Upload successful!", type: "success" });
-      return { success: true };
+      return { success: true, data };
     } catch (error) {
       setNotification({ message: error.message || "Upload failed", type: "error" });
-      return { success: false, error };
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -251,6 +251,7 @@ const App = () => {
       setNotification({ message: "Photo deleted", type: "success" });
     } catch (error) {
       setNotification({ message: error.message || "Delete failed", type: "error" });
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -278,7 +279,7 @@ const App = () => {
         <Routes>
           <Route
             path="/signup"
-            element={!user ? <SignUpPage handleSignUp={handleSignUp} /> : <Navigate to="/" replace />}
+            element={!user ? <SignUpPage onSignUp={handleSignUp} /> : <Navigate to="/" replace />}
           />
           <Route
             path="/login"

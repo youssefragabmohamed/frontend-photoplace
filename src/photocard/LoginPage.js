@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { NavLink } from "react-router-dom";
 
-const LoginPage = ({ setUser }) => {
+const LoginPage = ({ handleLogin }) => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -18,18 +18,10 @@ const LoginPage = ({ setUser }) => {
     setError(null);
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Login failed");
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("userId", data.user._id);
-      setUser(data.user);
+      const { success } = await handleLogin(formData.email, formData.password);
+      if (success) {
+        navigate("/");
+      }
     } catch (error) {
       setError(error.message);
     } finally {

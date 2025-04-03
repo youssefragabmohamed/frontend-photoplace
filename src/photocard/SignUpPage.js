@@ -1,15 +1,20 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { NavLink } from "react-router-dom";
 
 const SignUpPage = ({ onSignUp }) => {
   const [form, setForm] = useState({ username: "", email: "", password: "" });
   const [status, setStatus] = useState({ loading: false, error: null });
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus({ loading: true, error: null });
     try {
-      await onSignUp(form);
+      const { success } = await onSignUp(form);
+      if (success) {
+        navigate("/");
+      }
     } catch (error) {
       setStatus({ loading: false, error: error.message });
     }
