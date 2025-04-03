@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faCloudUploadAlt, faImage } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faCloudUploadAlt } from '@fortawesome/free-solid-svg-icons';
 
 const UploadPhoto = ({ onUpload, onClose }) => {
   const [title, setTitle] = useState("");
@@ -63,7 +63,8 @@ const UploadPhoto = ({ onUpload, onClose }) => {
       return;
     }
 
-    const token = localStorage.getItem("token");
+    // Get token from localStorage (same way as in App.js)
+    const token = localStorage.getItem('authToken');
     if (!token) {
       setError("Please log in to upload photos.");
       return;
@@ -80,22 +81,31 @@ const UploadPhoto = ({ onUpload, onClose }) => {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/upload`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
+          "Authorization": `Bearer ${token}`,
+          // Don't set Content-Type - let browser set it with boundary
         },
-        body: formData,
+        credentials: 'include', // Important for cookies
+        body: formData
       });
 
-      const data = await response.json();
-
+      // Handle non-OK responses
       if (!response.ok) {
-        throw new Error(data.message || "Upload failed. Please try again.");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Upload failed. Server responded with " + response.status);
       }
 
+      const data = await response.json();
       onUpload(data.photo);
       resetForm();
       if (onClose) onClose();
     } catch (error) {
-      setError(error.message);
+      console.error("Upload error:", error);
+      setError(error.message || "Upload failed. Please try again.");
+      
+      // Handle specific error cases
+      if (error.message.includes("401")) {
+        setError("Session expired. Please log in again.");
+      }
     } finally {
       setIsUploading(false);
     }
@@ -190,7 +200,14 @@ const UploadPhoto = ({ onUpload, onClose }) => {
           className="submit-btn"
           disabled={isUploading}
         >
-          {isUploading ? "Uploading..." : "Upload Photo"}
+          {isUploading ? (
+            <>
+              <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              Uploading...
+            </>
+          ) : (
+            "Upload Photo"
+          )}
         </button>
       </form>
     </div>
