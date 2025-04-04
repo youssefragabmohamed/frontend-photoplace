@@ -1,3 +1,4 @@
+// App.js
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -78,7 +79,6 @@ const App = () => {
         const data = await response.json();
         setUser(data.user);
         storeAuthData(token, data.user);
-        // Redirect if coming from login
         if (location.state?.from) {
           navigate(location.state.from, { replace: true });
         }
@@ -238,7 +238,10 @@ const App = () => {
         }
       });
       
-      if (!response.ok) throw new Error('Upload failed');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Upload failed');
+      }
       
       const data = await response.json();
       setPhotos(prev => [...prev, data.photo]);
