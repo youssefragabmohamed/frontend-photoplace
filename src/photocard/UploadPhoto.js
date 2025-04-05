@@ -63,7 +63,11 @@ const UploadPhoto = ({ onUpload, onClose }) => {
       return;
     }
 
-    // Get token from localStorage (same way as in App.js)
+    if (!title.trim()) {
+      setError("Title is required");
+      return;
+    }
+
     const token = localStorage.getItem('authToken');
     if (!token) {
       setError("Please log in to upload photos.");
@@ -81,14 +85,12 @@ const UploadPhoto = ({ onUpload, onClose }) => {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/upload`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${token}`,
-          // Don't set Content-Type - let browser set it with boundary
+          "Authorization": `Bearer ${token}`
         },
-        credentials: 'include', // Important for cookies
+        credentials: 'include',
         body: formData
       });
 
-      // Handle non-OK responses
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Upload failed. Server responded with " + response.status);
@@ -102,7 +104,6 @@ const UploadPhoto = ({ onUpload, onClose }) => {
       console.error("Upload error:", error);
       setError(error.message || "Upload failed. Please try again.");
       
-      // Handle specific error cases
       if (error.message.includes("401")) {
         setError("Session expired. Please log in again.");
       }
@@ -163,6 +164,7 @@ const UploadPhoto = ({ onUpload, onClose }) => {
             <p>Drag & drop an image here, or click to select</p>
             <input
               type="file"
+              name="photo"
               ref={fileInputRef}
               accept="image/*"
               onChange={handleFileChange}
@@ -173,9 +175,10 @@ const UploadPhoto = ({ onUpload, onClose }) => {
         )}
 
         <div className="form-group">
-          <label htmlFor="title">Title</label>
+          <label htmlFor="title">Title *</label>
           <input
             id="title"
+            name="title"
             type="text"
             placeholder="Give your photo a title"
             value={title}
@@ -188,6 +191,7 @@ const UploadPhoto = ({ onUpload, onClose }) => {
           <label htmlFor="description">Description (Optional)</label>
           <textarea
             id="description"
+            name="description"
             placeholder="Tell us about this photo"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -198,7 +202,7 @@ const UploadPhoto = ({ onUpload, onClose }) => {
         <button 
           type="submit" 
           className="submit-btn"
-          disabled={isUploading}
+          disabled={isUploading || !file || !title.trim()}
         >
           {isUploading ? (
             <>
