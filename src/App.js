@@ -97,33 +97,33 @@ const App = () => {
   };
 
   // Fetch photos when user is authenticated
-  useEffect(() => {
-    const fetchPhotos = async () => {
-      if (!user) return;
+  const fetchPhotos = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
       
-      setLoading(true);
-      try {
-        const token = getAuthToken();
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        });
-        
-        if (!response.ok) throw new Error('Failed to load photos');
-        
-        const data = await response.json();
-        setPhotos(data);
-        setFilteredPhotos(data);
-      } catch (error) {
-        setNotification({ message: error.message, type: 'error' });
-      } finally {
-        setLoading(false);
-      }
-    };
+      if (!response.ok) throw new Error('Failed to load photos');
+      
+      const data = await response.json();
+      setPhotos(data);
+      setFilteredPhotos(data);
+    } catch (error) {
+      setNotification({ message: error.message, type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchPhotos();
   }, [user]);
 
@@ -226,7 +226,7 @@ const App = () => {
       const formData = new FormData();
       formData.append("photo", newPhoto.file);
       formData.append("title", newPhoto.title);
-      formData.append("description", newPhoto.description);
+      formData.append("description", newPhoto.description || "");
 
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/upload`, {
         method: "POST",
@@ -243,8 +243,7 @@ const App = () => {
       }
       
       const data = await response.json();
-      setPhotos(prev => [...prev, data.photo]);
-      setFilteredPhotos(prev => [...prev, data.photo]);
+      await fetchPhotos(); // Refresh the photo list
       setNotification({ message: "Upload successful!", type: "success" });
       return { success: true, data };
     } catch (error) {
@@ -273,8 +272,7 @@ const App = () => {
         throw new Error(errorData.message || 'Delete failed');
       }
       
-      setPhotos(prev => prev.filter(photo => photo._id !== photoId));
-      setFilteredPhotos(prev => prev.filter(photo => photo._id !== photoId));
+      await fetchPhotos(); // Refresh the photo list
       setNotification({ message: "Photo deleted", type: "success" });
     } catch (error) {
       setNotification({ message: error.message || "Delete failed", type: "error" });
