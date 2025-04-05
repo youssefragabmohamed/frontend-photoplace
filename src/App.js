@@ -223,10 +223,16 @@ const App = () => {
     setLoading(true);
     try {
       const token = getAuthToken();
+      if (!token) {
+        throw new Error("Authentication required");
+      }
+
       const formData = new FormData();
       formData.append("photo", newPhoto.file);
       formData.append("title", newPhoto.title);
-      formData.append("description", newPhoto.description || "");
+      if (newPhoto.description) {
+        formData.append("description", newPhoto.description);
+      }
 
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/upload`, {
         method: "POST",
@@ -236,18 +242,24 @@ const App = () => {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Upload failed');
       }
-      
+
       const data = await response.json();
-      await fetchPhotos(); // Refresh the photo list
-      setNotification({ message: "Upload successful!", type: "success" });
+      await fetchPhotos();
+      setNotification({ 
+        message: data.message || "Upload successful!", 
+        type: "success" 
+      });
       return { success: true, data };
     } catch (error) {
-      setNotification({ message: error.message || "Upload failed", type: "error" });
+      setNotification({ 
+        message: error.message || "Upload failed", 
+        type: "error" 
+      });
       throw error;
     } finally {
       setLoading(false);
@@ -272,7 +284,7 @@ const App = () => {
         throw new Error(errorData.message || 'Delete failed');
       }
       
-      await fetchPhotos(); // Refresh the photo list
+      await fetchPhotos();
       setNotification({ message: "Photo deleted", type: "success" });
     } catch (error) {
       setNotification({ message: error.message || "Delete failed", type: "error" });

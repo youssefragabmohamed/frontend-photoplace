@@ -68,45 +68,22 @@ const UploadPhoto = ({ onUpload, onClose }) => {
       return;
     }
 
-    const token = localStorage.getItem('authToken');
-    if (!token) {
-      setError("Please log in to upload photos.");
-      return;
-    }
-
     setIsUploading(true);
 
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("description", description);
-    formData.append("photo", file);
-
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/upload`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`
-        },
-        credentials: 'include',
-        body: formData
+      const result = await onUpload({
+        file,
+        title,
+        description
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Upload failed. Server responded with " + response.status);
+      if (result && result.success) {
+        resetForm();
+        if (onClose) onClose();
       }
-
-      const data = await response.json();
-      onUpload(data.photo);
-      resetForm();
-      if (onClose) onClose();
     } catch (error) {
       console.error("Upload error:", error);
       setError(error.message || "Upload failed. Please try again.");
-      
-      if (error.message.includes("401")) {
-        setError("Session expired. Please log in again.");
-      }
     } finally {
       setIsUploading(false);
     }
@@ -206,7 +183,7 @@ const UploadPhoto = ({ onUpload, onClose }) => {
         >
           {isUploading ? (
             <>
-              <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span className="spinner" role="status" aria-hidden="true"></span>
               Uploading...
             </>
           ) : (
