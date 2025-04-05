@@ -19,7 +19,7 @@ const PhotoGallery = ({ onDeletePhoto }) => {
       credentials: 'include'
     })
       .then((response) => {
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        if (!response.ok) throw new Error(`Failed to load photos: ${response.status}`);
         return response.json();
       })
       .then((data) => {
@@ -27,7 +27,7 @@ const PhotoGallery = ({ onDeletePhoto }) => {
         setPhotos(data);
       })
       .catch(err => {
-        console.error("Error fetching photos:", err);
+        console.error("Error:", err);
         setError(err.message);
       })
       .finally(() => setLoading(false));

@@ -1,4 +1,3 @@
-// App.js
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -269,7 +268,10 @@ const App = () => {
         }
       });
       
-      if (!response.ok) throw new Error('Delete failed');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Delete failed');
+      }
       
       setPhotos(prev => prev.filter(photo => photo._id !== photoId));
       setFilteredPhotos(prev => prev.filter(photo => photo._id !== photoId));
