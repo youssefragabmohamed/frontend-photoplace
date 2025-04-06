@@ -3,9 +3,8 @@ import React from "react";
 const PlaceholderCard = ({ index }) => {
   return (
     <div 
-      className="glass-card"
+      className="masonry-item glass-card"
       style={{
-        aspectRatio: "1/1.5",
         borderRadius: "var(--radius-lg)",
         position: "relative",
         overflow: "hidden",
@@ -16,7 +15,7 @@ const PlaceholderCard = ({ index }) => {
       <div 
         className="skeleton"
         style={{
-          height: "70%",
+          height: `${Math.random() * 200 + 150}px`, // Random height between 150-350px
           width: "100%",
           borderBottom: "1px solid var(--glass-border)"
         }}
@@ -26,7 +25,6 @@ const PlaceholderCard = ({ index }) => {
       <div className="placeholder-content">
         <div className="placeholder-line long"></div>
         <div className="placeholder-line medium"></div>
-        <div className="placeholder-line short"></div>
       </div>
     </div>
   );
