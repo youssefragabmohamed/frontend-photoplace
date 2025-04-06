@@ -1,25 +1,43 @@
-import React, { useState, useEffect } from "react";
-import PhotoBox from "./Photobox";
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const PhotoGallery = ({ photos, loading, onDeletePhoto }) => {
-  const [error, setError] = useState(null);
-
-  const handleDelete = async (photoId) => {
-    try {
-      await onDeletePhoto(photoId);
-    } catch (error) {
-      setError(error.message);
-    }
-  };
+const PhotoGallery = ({ photos, onDeletePhoto }) => {
+  const navigate = useNavigate();
 
   return (
-    <div className="container">
-      {error && <div className="error-message">{error}</div>}
-      <PhotoBox
-        photos={photos}
-        loading={loading}
-        onDeletePhoto={handleDelete}
-      />
+    <div className="photo-gallery">
+      {photos.map(photo => (
+        <div 
+          key={photo._id} 
+          className="photo-card"
+          onClick={() => navigate(`/photo/${photo._id}`)}
+        >
+          <img 
+            src={photo.url} 
+            alt={photo.title} 
+            className="photo-thumbnail"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = 'https://via.placeholder.com/300x200?text=Image+Not+Available';
+            }}
+          />
+          <div className="photo-info">
+            <h3>{photo.title}</h3>
+            {photo.description && <p>{photo.description}</p>}
+          </div>
+          <button 
+            className="delete-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (window.confirm('Are you sure you want to delete this photo?')) {
+                onDeletePhoto(photo._id);
+              }
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      ))}
     </div>
   );
 };

@@ -251,9 +251,10 @@ const App = () => {
       const data = await response.json();
       await fetchPhotos();
       setNotification({ 
-        message: data.message || "Upload successful!", 
+        message: "Photo uploaded successfully!", 
         type: "success" 
       });
+      navigate(`/photo/${data.photo._id}`);
       return { success: true, data };
     } catch (error) {
       setNotification({ 

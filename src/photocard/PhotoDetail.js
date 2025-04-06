@@ -8,14 +8,22 @@ const PhotoDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const handleBack = () => navigate(-1);
-
   useEffect(() => {
     const fetchPhoto = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/${id}`);
+        const token = localStorage.getItem('authToken');
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
         if (!response.ok) throw new Error("Photo not found");
-        setPhoto(await response.json());
+        
+        const data = await response.json();
+        setPhoto(data);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -25,39 +33,35 @@ const PhotoDetail = () => {
     fetchPhoto();
   }, [id]);
 
-  if (loading) return <div className="skeleton" style={{ height: "200px", borderRadius: "var(--radius-md)" }} />;
-  if (error) return <div className="notification error">{error}</div>;
-  if (!photo) return <div>Photo not found!</div>;
+  if (loading) return <div className="loading">Loading...</div>;
+  if (error) return <div className="error">{error}</div>;
+  if (!photo) return <div className="not-found">Photo not found</div>;
 
   return (
-    <div className="container">
+    <div className="photo-detail-container">
       <button 
-        onClick={handleBack} 
-        className="btn btn-outline"
-        style={{ marginBottom: "var(--space-md)" }}
+        onClick={() => navigate(-1)} 
+        className="back-btn"
       >
-        ← Back to Gallery
+        &larr; Back to Gallery
       </button>
       
-      <div className="card" style={{ padding: "var(--space-md)" }}>
-        <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: "var(--space-lg)" }}>
-          {photo.url && (
-            <img 
-              src={photo.url} 
-              alt={photo.title} 
-              className="photo-detail-img"
-              style={{ 
-                width: "100%", 
-                borderRadius: "var(--radius-md)",
-                boxShadow: "var(--shadow-md)"
-              }}
-            />
-          )}
-          <div className="photo-info">
-            <h2>{photo.title}</h2>
-            <p className="text-muted">{photo.description || "No description available"}</p>
-            <p className="text-muted">Photographer: {photo.userId || "Unknown"}</p>
-          </div>
+      <div className="photo-detail-content">
+        <img 
+          src={photo.url} 
+          alt={photo.title} 
+          className="photo-detail-image"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = 'https://via.placeholder.com/800x600?text=Image+Not+Available';
+          }}
+        />
+        <div className="photo-meta">
+          <h2>{photo.title}</h2>
+          <p className="description">{photo.description || "No description provided"}</p>
+          <p className="upload-info">
+            Uploaded by {photo.userId?.username || "Unknown"} • {new Date(photo.createdAt).toLocaleDateString()}
+          </p>
         </div>
       </div>
     </div>
