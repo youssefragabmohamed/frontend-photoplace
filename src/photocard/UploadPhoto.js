@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faCloudUploadAlt } from '@fortawesome/free-solid-svg-icons';
+import './UploadPhoto.css'; // We'll create this new CSS file
 
 const UploadPhoto = ({ onUpload, onClose }) => {
   const [title, setTitle] = useState("");
@@ -9,6 +10,7 @@ const UploadPhoto = ({ onUpload, onClose }) => {
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
@@ -42,11 +44,17 @@ const UploadPhoto = ({ onUpload, onClose }) => {
   const handleDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    setIsDragging(false);
     
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       fileInputRef.current.files = e.dataTransfer.files;
@@ -100,7 +108,7 @@ const UploadPhoto = ({ onUpload, onClose }) => {
   };
 
   return (
-    <div className="upload-photo-container">
+    <div className="upload-container">
       <div className="upload-header">
         <h2>Upload Photo</h2>
         {onClose && (
@@ -115,30 +123,53 @@ const UploadPhoto = ({ onUpload, onClose }) => {
       <form onSubmit={handleSubmit} className="upload-form">
         {preview ? (
           <div className="preview-container">
-            <img src={preview} alt="Preview" className="preview-image" />
-            <button 
-              type="button" 
-              onClick={() => {
-                setPreview(null);
-                setFile(null);
-                if (fileInputRef.current) {
-                  fileInputRef.current.value = "";
-                }
-              }}
-              className="replace-btn"
-            >
-              Replace Image
-            </button>
+            <div className="image-wrapper">
+              <img 
+                src={preview} 
+                alt="Preview" 
+                className="preview-image" 
+                style={{ maxHeight: '400px', maxWidth: '100%', objectFit: 'contain' }}
+              />
+            </div>
+            <div className="upload-controls">
+              <button 
+                type="button" 
+                onClick={() => {
+                  setPreview(null);
+                  setFile(null);
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                  }
+                }}
+                className="btn btn-outline"
+              >
+                Replace Image
+              </button>
+            </div>
           </div>
         ) : (
           <div 
-            className="dropzone"
+            className={`dropzone ${isDragging ? 'drag-over' : ''}`}
             onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current.click()}
           >
-            <FontAwesomeIcon icon={faCloudUploadAlt} size="3x" />
-            <p>Drag & drop an image here, or click to select</p>
+            <div className="dropzone-content">
+              <FontAwesomeIcon icon={faCloudUploadAlt} size="3x" />
+              <p>Drag & drop photos here</p>
+              <p>or</p>
+              <button 
+                type="button"
+                className="browse-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fileInputRef.current.click();
+                }}
+              >
+                Browse files
+              </button>
+            </div>
             <input
               type="file"
               name="photo"
@@ -178,7 +209,7 @@ const UploadPhoto = ({ onUpload, onClose }) => {
 
         <button 
           type="submit" 
-          className="submit-btn"
+          className="btn btn-primary submit-btn"
           disabled={isUploading || !file || !title.trim()}
         >
           {isUploading ? (

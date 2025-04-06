@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import PlaceholderCard from "./PlaceholderCard";
+import "./Photobox.css"; // We'll create this new CSS file
 
 const Photobox = ({ photos, loading, onDeletePhoto }) => {
   if (loading) {
@@ -22,17 +23,17 @@ const Photobox = ({ photos, loading, onDeletePhoto }) => {
   };
 
   return (
-    <div className="photo-grid">
+    <div className="masonry-grid">
       {photos.map((photo) => {
         if (!photo._id || !photo.url) return null;
         
         return (
           <Link to={`/photo/${photo._id}`} key={photo._id} className="photo-card-link">
-            <div className="photo-card card">
+            <div className="masonry-item">
               <img
                 src={photo.url.startsWith("http") ? photo.url : `${process.env.REACT_APP_API_URL}${photo.url}`}
                 alt={photo.title || "No Title"}
-                className="photo-img"
+                className="masonry-img"
               />
               <div className="photo-overlay">
                 <p className="photo-title">{photo.title}</p>
