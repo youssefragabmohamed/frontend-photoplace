@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faCloudUploadAlt } from '@fortawesome/free-solid-svg-icons';
-import './UploadPhoto.css'; // We'll create this new CSS file
+import '../App.css'; // Use App.css instead of UploadPhoto.css
 
 const UploadPhoto = ({ onUpload, onClose }) => {
   const [title, setTitle] = useState("");

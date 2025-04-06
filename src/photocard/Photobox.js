@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import PlaceholderCard from "./PlaceholderCard";
-import "./Photobox.css"; // We'll create this new CSS file
+import "../App.css"; // Use App.css instead of Photobox.css
 
 const Photobox = ({ photos, loading, onDeletePhoto }) => {
   if (loading) {
@@ -26,7 +26,7 @@ const Photobox = ({ photos, loading, onDeletePhoto }) => {
     <div className="masonry-grid">
       {photos.map((photo) => {
         if (!photo._id || !photo.url) return null;
-        
+
         return (
           <Link to={`/photo/${photo._id}`} key={photo._id} className="photo-card-link">
             <div className="masonry-item">
