@@ -2,7 +2,7 @@ import React from "react";
 import Masonry from "react-masonry-css";
 import { Link } from "react-router-dom";
 import PlaceholderCard from "./PlaceholderCard";
-import "./Photobox.css"; // optional: for grid spacing
+import "./App.css"; // optional: for grid spacing
 
 const Photobox = ({ photos, loading, onDeletePhoto }) => {
   const breakpointColumnsObj = {
