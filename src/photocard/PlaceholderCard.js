@@ -5,6 +5,7 @@ const PlaceholderCard = ({ index }) => {
     <div 
       className="masonry-item glass-card"
       style={{
+        gridRowEnd: `span ${Math.floor(Math.random() * 15) + 15}`,
         borderRadius: "var(--radius-lg)",
         position: "relative",
         overflow: "hidden",
@@ -15,7 +16,7 @@ const PlaceholderCard = ({ index }) => {
       <div 
         className="skeleton"
         style={{
-          height: `${Math.random() * 200 + 150}px`, // Random height between 150-350px
+          height: `${Math.random() * 200 + 150}px`,
           width: "100%",
           borderBottom: "1px solid var(--glass-border)"
         }}

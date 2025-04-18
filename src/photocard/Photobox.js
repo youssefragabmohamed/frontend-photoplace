@@ -26,13 +26,36 @@ const Photobox = ({ photos, loading, onDeletePhoto }) => {
       {photos.map((photo) => {
         if (!photo._id || !photo.url) return null;
         
+        // Calculate aspect ratio if available
+        const aspectRatio = photo.height && photo.width 
+          ? Math.round(photo.height / photo.width * 100) / 100 
+          : 1.5;
+        
         return (
-          <Link to={`/photo/${photo._id}`} key={photo._id} className="masonry-item-link">
-            <div className="masonry-item card">
+          <div 
+            key={photo._id}
+            className="masonry-item card"
+            style={{ 
+              '--row-span': Math.round(aspectRatio * 20),
+              '--aspect-ratio': aspectRatio
+            }}
+            data-aspect-ratio={aspectRatio}
+          >
+            <Link to={`/photo/${photo._id}`} className="masonry-item-link">
               <img
                 src={photo.url.startsWith("http") ? photo.url : `${process.env.REACT_APP_API_URL}${photo.url}`}
                 alt={photo.title || "No Title"}
                 className="masonry-img"
+                onLoad={(e) => {
+                  // Update aspect ratio when image loads
+                  if (e.target.naturalHeight && e.target.naturalWidth) {
+                    const ratio = e.target.naturalHeight / e.target.naturalWidth;
+                    e.target.closest('.masonry-item').style.setProperty(
+                      '--row-span', 
+                      Math.round(ratio * 20)
+                    );
+                  }
+                }}
               />
               <div className="photo-overlay">
                 <p className="photo-title">{photo.title}</p>
@@ -49,8 +72,8 @@ const Photobox = ({ photos, loading, onDeletePhoto }) => {
                   Delete
                 </button>
               </div>
-            </div>
-          </Link>
+            </Link>
+          </div>
         );
       })}
     </div>

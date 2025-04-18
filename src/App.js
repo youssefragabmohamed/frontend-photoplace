@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome, faSearch, faPlusSquare, faUser, faCog } from '@fortawesome/free-solid-svg-icons';
 import Header from "./components/Header";
 import SearchBar from "./components/SearchBar";
-import PhotoGallery from "./photocard/PhotoGallery";
+import Photobox from "./photocard/Photobox";
 import SignUpPage from "./photocard/SignUpPage";
 import LoginPage from "./photocard/LoginPage";
 import Notification from "./photocard/Notification";
@@ -329,7 +329,7 @@ const App = () => {
               <PrivateRoute user={user}>
                 <>
                   <SearchBar onSearch={setSearchQuery} />
-                  <PhotoGallery
+                  <Photobox
                     photos={filteredPhotos.filter(photo =>
                       photo?.title?.toLowerCase().includes(searchQuery.toLowerCase())
                     )}
@@ -411,3 +411,8 @@ const App = () => {
 };
 
 export default App;
+
+const obj = {
+  key1: "value1",
+  key2: "value2" // Missing comma here would cause the error
+};
