@@ -16,20 +16,34 @@ const ProfilePage = ({ user }) => {
   useEffect(() => {
     const fetchProfileData = async () => {
       setLoading(true);
+      const token = localStorage.getItem('authToken');
+
       try {
-        // Fetch user profile data
-        const userRes = await fetch(`${process.env.REACT_APP_API_URL}/api/profile/${userId}`);
+        const userRes = await fetch(`${process.env.REACT_APP_API_URL}/api/profile/${userId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+
         if (!userRes.ok) throw new Error('Failed to fetch profile');
         const userData = await userRes.json();
-        
-        // Fetch user photos
-        const photosRes = await fetch(`${process.env.REACT_APP_API_URL}/api/profile/${userId}/photos`);
-        if (!photosRes.ok) throw new Error('Failed to fetch photos');
-        const photosData = await photosRes.json();
-        
         setProfileUser(userData.user);
-        setPhotos(photosData);
         setIsCurrentUser(user && user._id === userId);
+
+        const photosRes = await fetch(`${process.env.REACT_APP_API_URL}/api/photos`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+
+        if (!photosRes.ok) throw new Error('Failed to fetch photos');
+        const allPhotos = await photosRes.json();
+        const userPhotos = allPhotos.filter(photo => photo.userId?._id === userId);
+        setPhotos(userPhotos);
       } catch (error) {
         console.error("Profile fetch error:", error);
       } finally {
@@ -44,7 +58,7 @@ const ProfilePage = ({ user }) => {
     setPhotos(prev => [newPhoto, ...prev]);
     setProfileUser(prev => ({
       ...prev,
-      photosCount: prev.photosCount + 1
+      photosCount: (prev.photosCount || 0) + 1
     }));
     setShowUploadModal(false);
   };
@@ -80,7 +94,7 @@ const ProfilePage = ({ user }) => {
               style={{ width: "100px", height: "100px" }}
             />
           </div>
-          
+
           <div className="profile-stats" style={{ flex: 1 }}>
             <div className="flex" style={{ alignItems: "center", gap: "var(--space-lg)", marginBottom: "var(--space-md)" }}>
               <h2 style={{ fontSize: "var(--text-xl)", margin: 0 }}>{profileUser.username}</h2>
@@ -106,7 +120,7 @@ const ProfilePage = ({ user }) => {
                 </button>
               )}
             </div>
-            
+
             <div className="flex" style={{ gap: "var(--space-xl)", marginBottom: "var(--space-md)" }}>
               <div className="text-center">
                 <strong>{profileUser.photosCount || 0}</strong>
@@ -121,7 +135,7 @@ const ProfilePage = ({ user }) => {
                 <p className="text-muted">Following</p>
               </div>
             </div>
-            
+
             <div>
               <h3 style={{ fontSize: "var(--text-base)", marginBottom: "var(--space-xs)" }}>
                 {profileUser.fullName || profileUser.username}
@@ -198,8 +212,6 @@ const ProfilePage = ({ user }) => {
               className="photo-img" 
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
-            
-            {/* Photo Hover Overlay */}
             <div className="photo-overlay" style={{
               position: "absolute",
               top: 0,
@@ -224,7 +236,6 @@ const ProfilePage = ({ user }) => {
                 <span>{photo.commentsCount || 0}</span>
               </div>
             </div>
-            
             <Link 
               to={`/photo/${photo._id}`} 
               style={{
