@@ -2,13 +2,15 @@ import React from "react";
 import Masonry from "react-masonry-css";
 import { Link } from "react-router-dom";
 import PlaceholderCard from "./PlaceholderCard";
-import "../App.css"; // optional: for grid spacing
+import "../App.css";
 
 const Photobox = ({ photos, loading, onDeletePhoto }) => {
+  // Updated breakpoints for responsive columns
   const breakpointColumnsObj = {
-    default: 3,
-    1100: 2,
-    700: 1
+    default: 5,    // 5 columns on large screens (laptop/desktop)
+    1200: 4,       // 4 columns on medium-large screens
+    900: 3,        // 3 columns on tablets
+    600: 2         // 2 columns on all phones
   };
 
   if (loading) {
@@ -44,7 +46,11 @@ const Photobox = ({ photos, loading, onDeletePhoto }) => {
 
         return (
           <div key={photo._id} className="masonry-item">
-            <Link to={`/photos/${photo._id}`} className="masonry-item-link" style={{ display: "block", position: "relative" }}>
+            <Link 
+              to={`/photos/${photo._id}`} 
+              className="masonry-item-link" 
+              style={{ display: "block", position: "relative" }}
+            >
               <img
                 src={photo.url.startsWith("http") ? photo.url : `${process.env.REACT_APP_API_URL}${photo.url}`}
                 alt={photo.title || "No Title"}
