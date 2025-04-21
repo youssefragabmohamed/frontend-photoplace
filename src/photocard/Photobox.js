@@ -44,7 +44,7 @@ const Photobox = ({ photos, loading, onDeletePhoto }) => {
 
         return (
           <div key={photo._id} className="masonry-item">
-            <Link to={`/photo/${photo._id}`} className="masonry-item-link" style={{ display: "block", position: "relative" }}>
+            <Link to={`/photos/${photo._id}`} className="masonry-item-link" style={{ display: "block", position: "relative" }}>
               <img
                 src={photo.url.startsWith("http") ? photo.url : `${process.env.REACT_APP_API_URL}${photo.url}`}
                 alt={photo.title || "No Title"}

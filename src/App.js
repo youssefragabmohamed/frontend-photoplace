@@ -340,7 +340,7 @@ const App = () => {
             }
           />
           <Route 
-            path="/photo/:id" 
+            path="/photos/:id" 
             element={
               <PrivateRoute user={user}>
                 <PhotoDetail />
