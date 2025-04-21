@@ -3,6 +3,8 @@ import { useParams, Link } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEllipsis, faBookmark, faHeart, faComment } from '@fortawesome/free-solid-svg-icons';
 import UploadPhoto from "./UploadPhoto";
+import Notification from "./Notification"; // Import Notification Component
+import Photobox from "./Photobox"; // Import Photobox component
 
 const ProfilePage = ({ user }) => {
   const { userId } = useParams();
@@ -12,6 +14,7 @@ const ProfilePage = ({ user }) => {
   const [isCurrentUser, setIsCurrentUser] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [notif, setNotif] = useState(null); // Notification state
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -63,6 +66,47 @@ const ProfilePage = ({ user }) => {
     setShowUploadModal(false);
   };
 
+  const handleFollowToggle = async () => {
+    if (isCurrentUser) return;
+
+    const token = localStorage.getItem('authToken');
+    const isFollowing = profileUser.isFollowing; // assuming backend returns this field
+
+    try {
+      const res = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/follow/${profileUser._id}`,
+        {
+          method: isFollowing ? 'DELETE' : 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        }
+      );
+
+      if (!res.ok) throw new Error('Follow/unfollow failed');
+      const updatedUser = await res.json();
+      setProfileUser(updatedUser);
+
+      setNotif({
+        message: `${isFollowing ? 'Unfollowed' : 'Followed'} @${profileUser.username}`,
+        type: "success"
+      });
+    } catch (error) {
+      console.error("Follow/unfollow error:", error);
+      setNotif({
+        message: `Failed to ${profileUser.isFollowing ? 'unfollow' : 'follow'}. Try again.`,
+        type: "error"
+      });
+    }
+  };
+
+  const handleDeletePhoto = (photoId) => {
+    const newPhotos = photos.filter(photo => photo._id !== photoId);
+    setPhotos(newPhotos);
+  };
+
   if (loading) {
     return (
       <div className="container">
@@ -83,14 +127,17 @@ const ProfilePage = ({ user }) => {
 
   return (
     <div className="container">
+      {/* Notification */}
+      {notif && <Notification message={notif.message} type={notif.type} onClose={() => setNotif(null)} />}
+
       {/* Profile Header */}
       <div className="profile-header" style={{ marginBottom: "var(--space-xl)" }}>
         <div className="flex" style={{ gap: "var(--space-xl)", alignItems: "flex-start" }}>
           <div className="avatar-container" style={{ position: "relative" }}>
-            <img 
-              src={profileUser.profilePic || '/default-profile.jpg'} 
-              alt={profileUser.username} 
-              className="avatar" 
+            <img
+              src={profileUser.profilePic || '/default-profile.jpg'}
+              alt={profileUser.username}
+              className="avatar"
               style={{ width: "100px", height: "100px" }}
             />
           </div>
@@ -100,7 +147,7 @@ const ProfilePage = ({ user }) => {
               <h2 style={{ fontSize: "var(--text-xl)", margin: 0 }}>{profileUser.username}</h2>
               {isCurrentUser ? (
                 <>
-                  <button 
+                  <button
                     className="btn btn-outline"
                     onClick={() => setShowUploadModal(true)}
                     style={{ padding: "var(--space-xs) var(--space-md)" }}
@@ -112,11 +159,12 @@ const ProfilePage = ({ user }) => {
                   </button>
                 </>
               ) : (
-                <button 
-                  className="btn btn-primary"
+                <button
+                  className={`btn ${profileUser.isFollowing ? 'btn-outline' : 'btn-primary'}`}
+                  onClick={handleFollowToggle}
                   style={{ padding: "var(--space-xs) var(--space-md)" }}
                 >
-                  Follow
+                  {profileUser.isFollowing ? 'Unfollow' : 'Follow'}
                 </button>
               )}
             </div>
@@ -149,10 +197,10 @@ const ProfilePage = ({ user }) => {
       {/* Profile Tabs */}
       <div className="profile-tabs" style={{ borderBottom: "1px solid var(--glass-border)", marginBottom: "var(--space-lg)" }}>
         <div className="flex" style={{ justifyContent: "center", gap: "var(--space-xl)" }}>
-          <button 
+          <button
             className={`tab-btn ${activeTab === 'posts' ? 'active' : ''}`}
             onClick={() => setActiveTab('posts')}
-            style={{ 
+            style={{
               padding: "var(--space-sm) 0",
               position: "relative",
               background: "none",
@@ -173,89 +221,13 @@ const ProfilePage = ({ user }) => {
               }}></div>
             )}
           </button>
-          {isCurrentUser && (
-            <button 
-              className={`tab-btn ${activeTab === 'saved' ? 'active' : ''}`}
-              onClick={() => setActiveTab('saved')}
-              style={{ 
-                padding: "var(--space-sm) 0",
-                position: "relative",
-                background: "none",
-                border: "none",
-                color: activeTab === 'saved' ? "var(--text-primary)" : "var(--text-secondary)",
-                fontWeight: activeTab === 'saved' ? "600" : "400"
-              }}
-            >
-              <FontAwesomeIcon icon={faBookmark} />
-              {activeTab === 'saved' && (
-                <div style={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: "2px",
-                  background: "var(--primary)"
-                }}></div>
-              )}
-            </button>
-          )}
         </div>
       </div>
 
-      {/* Photo Grid */}
-      <div className="photo-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)", gap: "var(--space-sm)" }}>
-        {photos.map(photo => (
-          <div key={photo._id} className="photo-card" style={{ aspectRatio: "1/1", position: "relative" }}>
-            <img 
-              src={photo.url} 
-              alt={photo.title} 
-              className="photo-img" 
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-            <div className="photo-overlay" style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: "rgba(0,0,0,0.3)",
-              opacity: 0,
-              transition: "var(--transition-normal)",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: "var(--space-xl)",
-              color: "white"
-            }}>
-              <div className="flex" style={{ alignItems: "center", gap: "var(--space-xs)" }}>
-                <FontAwesomeIcon icon={faHeart} />
-                <span>{photo.likes || 0}</span>
-              </div>
-              <div className="flex" style={{ alignItems: "center", gap: "var(--space-xs)" }}>
-                <FontAwesomeIcon icon={faComment} />
-                <span>{photo.commentsCount || 0}</span>
-              </div>
-            </div>
-            <Link 
-              to={`/photo/${photo._id}`} 
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                zIndex: 1
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.previousElementSibling.style.opacity = "1";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.previousElementSibling.style.opacity = "0";
-              }}
-            ></Link>
-          </div>
-        ))}
-      </div>
+      {/* Show Photos when 'posts' Tab is active */}
+      {activeTab === 'posts' && (
+        <Photobox photos={photos} loading={loading} onDeletePhoto={handleDeletePhoto} />
+      )}
 
       {/* Upload Modal */}
       {showUploadModal && (
@@ -271,14 +243,14 @@ const ProfilePage = ({ user }) => {
           alignItems: "center",
           zIndex: 1000
         }}>
-          <div className="card" style={{ 
+          <div className="card" style={{
             width: "100%",
             maxWidth: "500px",
             padding: "var(--space-lg)"
           }}>
-            <UploadPhoto 
-              onUpload={handleUploadSuccess} 
-              onClose={() => setShowUploadModal(false)} 
+            <UploadPhoto
+              onUpload={handleUploadSuccess}
+              onClose={() => setShowUploadModal(false)}
             />
           </div>
         </div>
