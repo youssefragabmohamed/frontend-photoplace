@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEllipsis, faBookmark, faHeart, faComment } from '@fortawesome/free-solid-svg-icons';
-import UploadPhoto from "./UploadPhoto";
-import Notification from "./Notification"; // Import Notification Component
-import Photobox from "./Photobox"; // Import Photobox component
+import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
+import Notification from "./Notification";
+import Photobox from "./Photobox";
 
 const ProfilePage = ({ user }) => {
   const { userId } = useParams();
@@ -13,8 +12,7 @@ const ProfilePage = ({ user }) => {
   const [activeTab, setActiveTab] = useState('posts');
   const [isCurrentUser, setIsCurrentUser] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [notif, setNotif] = useState(null); // Notification state
+  const [notif, setNotif] = useState(null);
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -22,6 +20,7 @@ const ProfilePage = ({ user }) => {
       const token = localStorage.getItem('authToken');
 
       try {
+        // Fetch user profile
         const userRes = await fetch(`${process.env.REACT_APP_API_URL}/api/profile/${userId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -35,7 +34,8 @@ const ProfilePage = ({ user }) => {
         setProfileUser(userData.user);
         setIsCurrentUser(user && user._id === userId);
 
-        const photosRes = await fetch(`${process.env.REACT_APP_API_URL}/api/photos`, {
+        // Fetch user-specific photos using the new endpoint
+        const photosRes = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/user/${userId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -44,11 +44,14 @@ const ProfilePage = ({ user }) => {
         });
 
         if (!photosRes.ok) throw new Error('Failed to fetch photos');
-        const allPhotos = await photosRes.json();
-        const userPhotos = allPhotos.filter(photo => photo.userId?._id === userId);
+        const userPhotos = await photosRes.json();
         setPhotos(userPhotos);
       } catch (error) {
         console.error("Profile fetch error:", error);
+        setNotif({
+          message: "Failed to load profile data",
+          type: "error"
+        });
       } finally {
         setLoading(false);
       }
@@ -57,24 +60,15 @@ const ProfilePage = ({ user }) => {
     fetchProfileData();
   }, [userId, user]);
 
-  const handleUploadSuccess = (newPhoto) => {
-    setPhotos(prev => [newPhoto, ...prev]);
-    setProfileUser(prev => ({
-      ...prev,
-      photosCount: (prev.photosCount || 0) + 1
-    }));
-    setShowUploadModal(false);
-  };
-
   const handleFollowToggle = async () => {
     if (isCurrentUser) return;
 
     const token = localStorage.getItem('authToken');
-    const isFollowing = profileUser.isFollowing; // assuming backend returns this field
+    const isFollowing = profileUser.isFollowing;
 
     try {
       const res = await fetch(
-        `${process.env.REACT_APP_API_URL}/api/follow/${profileUser._id}`,
+        `${process.env.REACT_APP_API_URL}/api/${isFollowing ? 'unfollow' : 'follow'}/${profileUser._id}`,
         {
           method: isFollowing ? 'DELETE' : 'POST',
           headers: {
@@ -103,8 +97,7 @@ const ProfilePage = ({ user }) => {
   };
 
   const handleDeletePhoto = (photoId) => {
-    const newPhotos = photos.filter(photo => photo._id !== photoId);
-    setPhotos(newPhotos);
+    setPhotos(prev => prev.filter(photo => photo._id !== photoId));
   };
 
   if (loading) {
@@ -127,10 +120,8 @@ const ProfilePage = ({ user }) => {
 
   return (
     <div className="container">
-      {/* Notification */}
       {notif && <Notification message={notif.message} type={notif.type} onClose={() => setNotif(null)} />}
 
-      {/* Profile Header */}
       <div className="profile-header" style={{ marginBottom: "var(--space-xl)" }}>
         <div className="flex" style={{ gap: "var(--space-xl)", alignItems: "flex-start" }}>
           <div className="avatar-container" style={{ position: "relative" }}>
@@ -145,26 +136,18 @@ const ProfilePage = ({ user }) => {
           <div className="profile-stats" style={{ flex: 1 }}>
             <div className="flex" style={{ alignItems: "center", gap: "var(--space-lg)", marginBottom: "var(--space-md)" }}>
               <h2 style={{ fontSize: "var(--text-xl)", margin: 0 }}>{profileUser.username}</h2>
-              {isCurrentUser ? (
-                <>
-                  <button
-                    className="btn btn-outline"
-                    onClick={() => setShowUploadModal(true)}
-                    style={{ padding: "var(--space-xs) var(--space-md)" }}
-                  >
-                    Upload Photo
-                  </button>
-                  <button className="btn btn-outline" style={{ padding: "6px" }}>
-                    <FontAwesomeIcon icon={faEllipsis} />
-                  </button>
-                </>
-              ) : (
+              {!isCurrentUser && (
                 <button
                   className={`btn ${profileUser.isFollowing ? 'btn-outline' : 'btn-primary'}`}
                   onClick={handleFollowToggle}
                   style={{ padding: "var(--space-xs) var(--space-md)" }}
                 >
                   {profileUser.isFollowing ? 'Unfollow' : 'Follow'}
+                </button>
+              )}
+              {isCurrentUser && (
+                <button className="btn btn-outline" style={{ padding: "6px" }}>
+                  <FontAwesomeIcon icon={faEllipsis} />
                 </button>
               )}
             </div>
@@ -194,7 +177,6 @@ const ProfilePage = ({ user }) => {
         </div>
       </div>
 
-      {/* Profile Tabs */}
       <div className="profile-tabs" style={{ borderBottom: "1px solid var(--glass-border)", marginBottom: "var(--space-lg)" }}>
         <div className="flex" style={{ justifyContent: "center", gap: "var(--space-xl)" }}>
           <button
@@ -224,36 +206,8 @@ const ProfilePage = ({ user }) => {
         </div>
       </div>
 
-      {/* Show Photos when 'posts' Tab is active */}
       {activeTab === 'posts' && (
         <Photobox photos={photos} loading={loading} onDeletePhoto={handleDeletePhoto} />
-      )}
-
-      {/* Upload Modal */}
-      {showUploadModal && (
-        <div className="modal-overlay" style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: "rgba(0,0,0,0.5)",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          zIndex: 1000
-        }}>
-          <div className="card" style={{
-            width: "100%",
-            maxWidth: "500px",
-            padding: "var(--space-lg)"
-          }}>
-            <UploadPhoto
-              onUpload={handleUploadSuccess}
-              onClose={() => setShowUploadModal(false)}
-            />
-          </div>
-        </div>
       )}
     </div>
   );
