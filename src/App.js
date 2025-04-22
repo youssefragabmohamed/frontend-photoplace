@@ -97,14 +97,19 @@ const App = () => {
     }
   };
 
-  // Fetch photos when user is authenticated
-  const fetchPhotos = async () => {
+  // Updated fetchPhotos function
+  const fetchPhotos = async (category = null) => {
     if (!user) return;
     
     setLoading(true);
     try {
       const token = getAuthToken();
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos`, {
+      let url = `${process.env.REACT_APP_API_URL}/api/photos`;
+      if (category) {
+        url += `?location=${category}`;
+      }
+      
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -231,6 +236,7 @@ const App = () => {
       const formData = new FormData();
       formData.append("photo", newPhoto.file);
       formData.append("title", newPhoto.title);
+      formData.append("location", newPhoto.location);
       if (newPhoto.description) {
         formData.append("description", newPhoto.description);
       }
@@ -255,7 +261,7 @@ const App = () => {
         message: "Photo uploaded successfully!", 
         type: "success" 
       });
-      navigate(`/photo/${data.photo._id}`);
+      navigate(`/photos/${data.photo._id}`);
       return { success: true, data };
     } catch (error) {
       setNotification({ 
@@ -352,7 +358,7 @@ const App = () => {
             path="/upload" 
             element={
               <PrivateRoute user={user}>
-                <UploadPhoto onUpload={handleUpload} />
+                <UploadPhoto onUpload={handleUpload} onClose={() => navigate('/')} />
               </PrivateRoute>
             } 
           />
@@ -412,8 +418,3 @@ const App = () => {
 };
 
 export default App;
-
-const obj = {
-  key1: "value1",
-  key2: "value2" // Missing comma here would cause the error
-};

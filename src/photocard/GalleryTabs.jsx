@@ -1,32 +1,15 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import PhotoBox from "./Photobox";  // Import PhotoBox component
+import PhotoBox from "./Photobox";
 
 const tabs = ["Traditional", "Digital"];
 
-const GalleryTabs = ({ photos, onDeletePhoto, fetchPhotos }) => {
+const GalleryTabs = ({ photos, onDeletePhoto }) => {
   const [activeTab, setActiveTab] = useState(0);
-  const [loading, setLoading] = useState(true);  // Loading state to manage the fetching state
   const containerRef = useRef(null);
-
-  useEffect(() => {
-    const loadPhotos = async () => {
-      setLoading(true);
-      try {
-        await fetchPhotos(tabs[activeTab].toLowerCase()); // Pass the category (digital/traditional) to fetchPhotos
-      } catch (error) {
-        console.error("Failed to fetch photos:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadPhotos();
-  }, [activeTab, fetchPhotos]); // Runs when component mounts or activeTab changes
 
   const handleSwipe = (event, info) => {
     const offset = info.offset.x;
-
     if (offset < -50 && activeTab < tabs.length - 1) {
       setActiveTab(activeTab + 1);
     } else if (offset > 50 && activeTab > 0) {
@@ -37,9 +20,9 @@ const GalleryTabs = ({ photos, onDeletePhoto, fetchPhotos }) => {
   // Filter photos based on the active tab
   const filteredPhotos = photos.filter((photo) => {
     if (tabs[activeTab] === "Traditional") {
-      return photo.location === "traditional"; // Use 'traditional' to filter
+      return photo.location === "traditional";
     } else if (tabs[activeTab] === "Digital") {
-      return photo.location === "digital"; // Use 'digital' to filter
+      return photo.location === "digital";
     }
     return true;
   });
@@ -74,7 +57,7 @@ const GalleryTabs = ({ photos, onDeletePhoto, fetchPhotos }) => {
         ))}
       </div>
 
-      <div ref={containerRef} style={{ position: "relative", height: "300px" }}>
+      <div ref={containerRef} style={{ position: "relative", minHeight: "300px" }}>
         <AnimatePresence initial={false} mode="wait">
           <motion.div
             key={activeTab}
@@ -96,11 +79,11 @@ const GalleryTabs = ({ photos, onDeletePhoto, fetchPhotos }) => {
             }}
           >
             <h2>{tabs[activeTab]} Gallery</h2>
-            {/* Pass the loading state and filtered photos to PhotoBox */}
             <PhotoBox 
               photos={filteredPhotos} 
-              loading={loading} 
-              onDeletePhoto={onDeletePhoto} 
+              loading={false} 
+              onDeletePhoto={onDeletePhoto}
+              selectedTab={tabs[activeTab].toLowerCase()}
             />
           </motion.div>
         </AnimatePresence>

@@ -1,9 +1,9 @@
 import React, { useState, useRef } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faCloudUploadAlt } from '@fortawesome/free-solid-svg-icons';
-import '../App.css'; // Use App.css for styles
+import '../App.css';
 
-const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
+const UploadPhoto = ({ onUpload, onClose }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState(null);
@@ -11,11 +11,10 @@ const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
   const [error, setError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [selectedTab, setSelectedTab] = useState('digital'); // Default to digital
+  const [selectedTab, setSelectedTab] = useState('digital');
 
   const fileInputRef = useRef(null);
 
-  // Handle file changes
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
@@ -32,24 +31,21 @@ const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
     }
 
     setFile(selectedFile);
-    setError(""); // Clear previous error
+    setError("");
 
     const reader = new FileReader();
     reader.onloadend = () => setPreview(reader.result);
     reader.readAsDataURL(selectedFile);
   };
 
-  // Handle drag over for drag-and-drop
   const handleDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
   };
 
-  // Handle drag leave event
   const handleDragLeave = () => setIsDragging(false);
 
-  // Handle drop event for drag-and-drop
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -60,10 +56,9 @@ const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Clear previous error
+    setError("");
 
     if (!file) {
       setError("Please select an image file");
@@ -76,18 +71,16 @@ const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
     }
 
     setIsUploading(true);
-    setLoading(true);
 
     try {
       const result = await onUpload({
         file,
         title,
         description,
-        location: selectedTab, // Send location info (Digital/Traditional)
+        location: selectedTab,
       });
 
       if (result?.success) {
-        setPhotos((prevPhotos) => [...prevPhotos, result.photo]);
         resetForm();
         if (onClose) onClose();
       } else {
@@ -98,11 +91,9 @@ const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
       setError(error.message || "Upload failed. Please try again.");
     } finally {
       setIsUploading(false);
-      setLoading(false);
     }
   };
 
-  // Reset form after upload
   const resetForm = () => {
     setTitle("");
     setDescription("");
@@ -124,7 +115,6 @@ const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
 
       {error && <div className="error-message">{error}</div>}
 
-      {/* Tab selectors for Digital / Traditional */}
       <div className="tab-selector-container">
         <div className="tab-selector">
           <label
@@ -154,7 +144,6 @@ const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
       </div>
 
       <form onSubmit={handleSubmit} className="upload-form">
-        {/* Photo Preview */}
         {preview ? (
           <div className="preview-container">
             <img
@@ -210,7 +199,6 @@ const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
           </div>
         )}
 
-        {/* Title and description fields */}
         <div className="form-group">
           <label htmlFor="title">Title *</label>
           <input
