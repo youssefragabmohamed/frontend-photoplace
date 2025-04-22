@@ -1,7 +1,6 @@
 import React, { useState, useRef } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faCloudUploadAlt } from '@fortawesome/free-solid-svg-icons';
-import GalleryTabs from './GalleryTabs'; // Import GalleryTabs component
 import '../App.css'; // Use App.css instead of UploadPhoto.css
 
 const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
@@ -230,6 +229,29 @@ const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
           selectedTab={selectedTab}
           setSelectedTab={setSelectedTab}
         />
+
+        <div className="tab-selector">
+          <label>
+            <input
+              type="radio"
+              name="tab"
+              value="gallery"
+              checked={selectedTab === 'gallery'}
+              onChange={() => setSelectedTab('gallery')}
+            />
+            Gallery
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="tab"
+              value="profile"
+              checked={selectedTab === 'profile'}
+              onChange={() => setSelectedTab('profile')}
+            />
+            Profile
+          </label>
+        </div>
 
         <button
           type="submit"
