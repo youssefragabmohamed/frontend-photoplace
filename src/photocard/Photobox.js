@@ -5,36 +5,34 @@ import PlaceholderCard from "./PlaceholderCard";
 import "../App.css";
 
 const PhotoBox = ({ photos, loading, onDeletePhoto, selectedTab }) => {
-  // Updated breakpoints for responsive columns
+  // Updated breakpoints for better responsive columns
   const breakpointColumnsObj = {
-    default: 5,    // 5 columns on large screens (laptop/desktop)
-    1200: 4,       // 4 columns on medium-large screens
-    900: 3,        // 3 columns on tablets
-    600: 2         // 2 columns on all phones
+    default: 4,    // 4 columns on large screens
+    1200: 3,       // 3 columns on medium-large screens
+    900: 2,        // 2 columns on tablets
+    600: 1         // 1 column on phones (we'll override this)
   };
 
   // Filter photos based on selected tab
   const filteredPhotos = photos.filter((photo) => {
-    if (selectedTab === 'digital') {
-      return photo.location === 'digital'; // Filter by 'digital' location
-    }
-    if (selectedTab === 'traditional') {
-      return photo.location === 'traditional'; // Filter by 'traditional' location
-    }
-    return true; // Default case if no specific tab is selected
+    if (selectedTab === 'digital') return photo.location === 'digital';
+    if (selectedTab === 'traditional') return photo.location === 'traditional';
+    return true;
   });
 
   if (loading) {
     return (
-      <Masonry
-        breakpointCols={breakpointColumnsObj}
-        className="masonry-grid"
-        columnClassName="masonry-grid_column"
-      >
-        {Array.from({ length: 10 }).map((_, index) => (
-          <PlaceholderCard key={`placeholder-${index}`} index={index} />
-        ))}
-      </Masonry>
+      <div className="masonry-container" style={{ minHeight: '500px' }}>
+        <Masonry
+          breakpointCols={breakpointColumnsObj}
+          className="masonry-grid"
+          columnClassName="masonry-grid_column"
+        >
+          {Array.from({ length: 10 }).map((_, index) => (
+            <PlaceholderCard key={`placeholder-${index}`} index={index} />
+          ))}
+        </Masonry>
+      </div>
     );
   }
 
@@ -47,51 +45,60 @@ const PhotoBox = ({ photos, loading, onDeletePhoto, selectedTab }) => {
   };
 
   return (
-    <Masonry
-      breakpointCols={breakpointColumnsObj}
-      className="masonry-grid"
-      columnClassName="masonry-grid_column"
-    >
-      {filteredPhotos.map((photo) => {
-        if (!photo._id || !photo.url) return null;
+    <div className="masonry-container">
+      <Masonry
+        breakpointCols={breakpointColumnsObj}
+        className="masonry-grid"
+        columnClassName="masonry-grid_column"
+      >
+        {filteredPhotos.map((photo) => {
+          if (!photo._id || !photo.url) return null;
 
-        return (
-          <div key={photo._id} className="masonry-item">
-            <Link 
-              to={`/photos/${photo._id}`} 
-              className="masonry-item-link" 
-              style={{ display: "block", position: "relative" }}
-            >
-              <img
-                src={photo.url.startsWith("http") ? photo.url : `${process.env.REACT_APP_API_URL}${photo.url}`}
-                alt={photo.title || "No Title"}
-                style={{
-                  width: "100%",
-                  borderRadius: "var(--radius-md)",
-                  display: "block"
-                }}
-                loading="lazy"
-              />
-              <div className="photo-overlay">
-                <p className="photo-title">{photo.title}</p>
-                <button
-                  className="btn btn-danger"
-                  onClick={(e) => handleDelete(photo._id, e)}
+          return (
+            <div key={photo._id} className="masonry-item">
+              <Link 
+                to={`/photos/${photo._id}`} 
+                className="masonry-item-link" 
+                style={{ display: "block", position: "relative" }}
+              >
+                <img
+                  src={photo.url.startsWith("http") ? photo.url : `${process.env.REACT_APP_API_URL}${photo.url}`}
+                  alt={photo.title || "No Title"}
                   style={{
-                    position: "absolute",
-                    top: "var(--space-sm)",
-                    right: "var(--space-sm)",
-                    padding: "var(--space-xs)"
+                    width: "100%",
+                    borderRadius: "var(--radius-md)",
+                    display: "block"
                   }}
-                >
-                  Delete
-                </button>
-              </div>
-            </Link>
-          </div>
-        );
-      })}
-    </Masonry>
+                  loading="lazy"
+                />
+                <div className="photo-overlay">
+                  <p className="photo-title">{photo.title}</p>
+                  <button
+                    className="btn btn-danger"
+                    onClick={(e) => handleDelete(photo._id, e)}
+                    style={{
+                      position: "absolute",
+                      top: "var(--space-sm)",
+                      right: "var(--space-sm)",
+                      padding: "var(--space-xs)"
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </Link>
+            </div>
+          );
+        })}
+      </Masonry>
+      
+      {/* Empty state when no photos */}
+      {filteredPhotos.length === 0 && (
+        <div className="empty-gallery">
+          <p>No photos found in this category</p>
+        </div>
+      )}
+    </div>
   );
 };
 

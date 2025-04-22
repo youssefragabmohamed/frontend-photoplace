@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import PhotoBox from "./Photobox";
+import "../App.css";
 
 const tabs = ["Traditional", "Digital"];
 
@@ -28,36 +29,26 @@ const GalleryTabs = ({ photos, onDeletePhoto }) => {
   });
 
   return (
-    <div className="tabs-wrapper" style={{ overflow: "hidden" }}>
-      <div
-        className="tab-header"
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: "1rem",
-          marginBottom: "1rem",
-        }}
-      >
-        {tabs.map((tab, index) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(index)}
-            className={`tab-button ${activeTab === index ? "active" : ""}`}
-            style={{
-              padding: "0.5rem 1rem",
-              fontWeight: activeTab === index ? "bold" : "normal",
-              background: activeTab === index ? "#eee" : "#fff",
-              border: "none",
-              borderBottom: activeTab === index ? "2px solid #333" : "1px solid #ccc",
-              cursor: "pointer",
-            }}
-          >
-            {tab}
-          </button>
-        ))}
+    <div className="gallery-container">
+      <div className="tab-header-container">
+        <div className="tab-header">
+          {tabs.map((tab, index) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(index)}
+              className={`tab-button ${activeTab === index ? "active" : ""}`}
+            >
+              {tab}
+              {activeTab === index && <div className="tab-indicator" />}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div ref={containerRef} style={{ position: "relative", minHeight: "300px" }}>
+      <div 
+        ref={containerRef} 
+        className="gallery-content-container"
+      >
         <AnimatePresence initial={false} mode="wait">
           <motion.div
             key={activeTab}
@@ -68,17 +59,9 @@ const GalleryTabs = ({ photos, onDeletePhoto }) => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -100 }}
             transition={{ duration: 0.3 }}
-            style={{
-              position: "absolute",
-              width: "100%",
-              height: "100%",
-              background: "#f9f9f9",
-              padding: "1rem",
-              borderRadius: "1rem",
-              boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-            }}
+            className="gallery-content"
           >
-            <h2>{tabs[activeTab]} Gallery</h2>
+            <h2 className="gallery-title">{tabs[activeTab]} Gallery</h2>
             <PhotoBox 
               photos={filteredPhotos} 
               loading={false} 
