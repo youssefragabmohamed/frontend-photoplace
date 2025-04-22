@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import PhotoBox from "./PhotoBox";  // Import PhotoBox component
+import PhotoBox from "./Photobox";  // Import PhotoBox component
 
 const tabs = ["Traditional", "Digital"];
 
