@@ -1,50 +1,45 @@
 import React, { useState, useRef } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faCloudUploadAlt } from '@fortawesome/free-solid-svg-icons';
-import '../App.css'; // Use App.css instead of UploadPhoto.css
+import '../App.css'; // Use App.css for styles
 
 const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
-  const [title, setTitle] = useState("");  // For the title of the uploaded photo
-  const [description, setDescription] = useState("");  // For the description of the uploaded photo
-  const [file, setFile] = useState(null);  // The file being uploaded
-  const [preview, setPreview] = useState(null);  // The file preview (for images)
-  const [error, setError] = useState("");  // To store any error messages
-  const [isUploading, setIsUploading] = useState(false);  // To track upload status
-  const [isDragging, setIsDragging] = useState(false);  // For drag-and-drop
-  const [selectedTab, setSelectedTab] = useState('gallery');  // Tab for categorizing the photo (Gallery or Profile)
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [error, setError] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [selectedTab, setSelectedTab] = useState('gallery');
 
-  const fileInputRef = useRef(null);  // Ref to file input for browsing files
+  const fileInputRef = useRef(null);
 
   // Handle file changes
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
 
-    // Validate file type (image)
     const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!validTypes.includes(selectedFile.type)) {
       setError("Please upload a valid image file (JPEG, PNG, GIF, WEBP)");
       return;
     }
 
-    // Validate file size (max 10MB)
     if (selectedFile.size > 10 * 1024 * 1024) {
       setError("File size too large (max 10MB)");
       return;
     }
 
     setFile(selectedFile);
-    setError("");  // Clear previous error
+    setError(""); // Clear previous error
 
-    // Generate image preview
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreview(reader.result);
-    };
+    reader.onloadend = () => setPreview(reader.result);
     reader.readAsDataURL(selectedFile);
   };
 
-  // Handle drag over event for drag-and-drop
+  // Handle drag over for drag-and-drop
   const handleDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -52,28 +47,24 @@ const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
   };
 
   // Handle drag leave event
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
+  const handleDragLeave = () => setIsDragging(false);
 
   // Handle drop event for drag-and-drop
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       fileInputRef.current.files = e.dataTransfer.files;
       handleFileChange({ target: { files: e.dataTransfer.files } });
     }
   };
 
-  // Handle form submission (photo upload)
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");  // Clear previous error
+    setError(""); // Clear previous error
 
-    // Validate that a file is selected and title is provided
     if (!file) {
       setError("Please select an image file");
       return;
@@ -84,42 +75,38 @@ const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
       return;
     }
 
-    // Start the uploading process
     setIsUploading(true);
-    setLoading(true);  // Set loading state to true when uploading
+    setLoading(true);
 
     try {
       const result = await onUpload({
         file,
         title,
         description,
-        location: selectedTab,  // Sending location (tab) as part of the upload info
+        location: selectedTab, // Send location info
       });
 
-      if (result && result.success) {
-        // Update photos list after successful upload
-        setPhotos(prevPhotos => [...prevPhotos, result.photo]);  
-        resetForm();  // Reset form fields
-        if (onClose) onClose();  // Close the upload modal if it's open
+      if (result?.success) {
+        setPhotos((prevPhotos) => [...prevPhotos, result.photo]);
+        resetForm();
+        if (onClose) onClose();
       }
     } catch (error) {
       console.error("Upload error:", error);
       setError(error.message || "Upload failed. Please try again.");
     } finally {
       setIsUploading(false);
-      setLoading(false);  // Reset loading state after the upload
+      setLoading(false);
     }
   };
 
-  // Reset form fields after upload
+  // Reset form after upload
   const resetForm = () => {
     setTitle("");
     setDescription("");
     setFile(null);
     setPreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   return (
@@ -136,32 +123,26 @@ const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
       {error && <div className="error-message">{error}</div>}
 
       <form onSubmit={handleSubmit} className="upload-form">
-        {/* Show preview if a photo is selected */}
+        {/* Photo Preview */}
         {preview ? (
           <div className="preview-container">
-            <div className="image-wrapper">
-              <img
-                src={preview}
-                alt="Preview"
-                className="preview-image"
-                style={{ maxHeight: '400px', maxWidth: '100%', objectFit: 'contain' }}
-              />
-            </div>
-            <div className="upload-controls">
-              <button
-                type="button"
-                onClick={() => {
-                  setPreview(null);
-                  setFile(null);
-                  if (fileInputRef.current) {
-                    fileInputRef.current.value = "";
-                  }
-                }}
-                className="btn btn-outline"
-              >
-                Replace Image
-              </button>
-            </div>
+            <img
+              src={preview}
+              alt="Preview"
+              className="preview-image"
+              style={{ maxHeight: '400px', maxWidth: '100%', objectFit: 'contain' }}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setPreview(null);
+                setFile(null);
+                if (fileInputRef.current) fileInputRef.current.value = "";
+              }}
+              className="btn btn-outline"
+            >
+              Replace Image
+            </button>
           </div>
         ) : (
           <div
@@ -198,7 +179,7 @@ const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
           </div>
         )}
 
-        {/* Title and description inputs */}
+        {/* Title and description fields */}
         <div className="form-group">
           <label htmlFor="title">Title *</label>
           <input
@@ -224,12 +205,7 @@ const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
           />
         </div>
 
-        {/* GalleryTabs component for selecting the upload destination */}
-        <GalleryTabs
-          selectedTab={selectedTab}
-          setSelectedTab={setSelectedTab}
-        />
-
+        {/* Tab selectors for choosing where the photo goes */}
         <div className="tab-selector">
           <label>
             <input
