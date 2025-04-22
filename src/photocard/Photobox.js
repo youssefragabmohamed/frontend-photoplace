@@ -15,13 +15,13 @@ const PhotoBox = ({ photos, loading, onDeletePhoto, selectedTab }) => {
 
   // Filter photos based on selected tab
   const filteredPhotos = photos.filter((photo) => {
-    if (selectedTab === 'gallery') {
-      return photo.location === 'gallery'; // Assuming photo has a 'location' field
+    if (selectedTab === 'digital') {
+      return photo.location === 'digital'; // Filter by 'digital' location
     }
-    if (selectedTab === 'profile') {
-      return photo.location === 'profile'; // Assuming photo has a 'location' field
+    if (selectedTab === 'traditional') {
+      return photo.location === 'traditional'; // Filter by 'traditional' location
     }
-    return true; // Default case for other tabs
+    return true; // Default case if no specific tab is selected
   });
 
   if (loading) {

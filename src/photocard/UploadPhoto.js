@@ -90,6 +90,8 @@ const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
         setPhotos((prevPhotos) => [...prevPhotos, result.photo]);
         resetForm();
         if (onClose) onClose();
+      } else {
+        setError("Upload failed, please try again.");
       }
     } catch (error) {
       console.error("Upload error:", error);

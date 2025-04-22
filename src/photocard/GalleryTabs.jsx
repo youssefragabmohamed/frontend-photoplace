@@ -13,7 +13,7 @@ const GalleryTabs = ({ photos, onDeletePhoto, fetchPhotos }) => {
     const loadPhotos = async () => {
       setLoading(true);
       try {
-        await fetchPhotos(); // Fetch the photos here
+        await fetchPhotos(tabs[activeTab].toLowerCase()); // Pass the category (digital/traditional) to fetchPhotos
       } catch (error) {
         console.error("Failed to fetch photos:", error);
       } finally {
@@ -22,7 +22,7 @@ const GalleryTabs = ({ photos, onDeletePhoto, fetchPhotos }) => {
     };
 
     loadPhotos();
-  }, [fetchPhotos]); // Runs when component mounts
+  }, [activeTab, fetchPhotos]); // Runs when component mounts or activeTab changes
 
   const handleSwipe = (event, info) => {
     const offset = info.offset.x;
@@ -37,11 +37,11 @@ const GalleryTabs = ({ photos, onDeletePhoto, fetchPhotos }) => {
   // Filter photos based on the active tab
   const filteredPhotos = photos.filter((photo) => {
     if (tabs[activeTab] === "Traditional") {
-      return photo.category === "Traditional";
+      return photo.location === "traditional"; // Use 'traditional' to filter
     } else if (tabs[activeTab] === "Digital") {
-      return photo.category === "Digital";
+      return photo.location === "digital"; // Use 'digital' to filter
     }
-    return true;  // Default for all other cases
+    return true;
   });
 
   return (
@@ -99,8 +99,8 @@ const GalleryTabs = ({ photos, onDeletePhoto, fetchPhotos }) => {
             {/* Pass the loading state and filtered photos to PhotoBox */}
             <PhotoBox 
               photos={filteredPhotos} 
-              loading={loading}  // Use the loading state here
-              onDeletePhoto={onDeletePhoto}  // Handle photo deletion
+              loading={loading} 
+              onDeletePhoto={onDeletePhoto} 
             />
           </motion.div>
         </AnimatePresence>
