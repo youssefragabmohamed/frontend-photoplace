@@ -12,6 +12,7 @@ import PhotoDetail from "./photocard/PhotoDetail";
 import UploadPhoto from "./photocard/UploadPhoto";
 import ProfilePage from "./photocard/ProfilePage";
 import PrivateRoute from "./photocard/PrivateRoute";
+import GalleryTabs from "./photocard/GalleryTabs";
 import './App.css';
 
 const App = () => {
@@ -329,7 +330,7 @@ const App = () => {
               <PrivateRoute user={user}>
                 <>
                   <SearchBar onSearch={setSearchQuery} />
-                  <Photobox
+                  <GalleryTabs
                     photos={filteredPhotos.filter(photo =>
                       photo?.title?.toLowerCase().includes(searchQuery.toLowerCase())
                     )}
