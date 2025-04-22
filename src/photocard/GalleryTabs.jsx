@@ -1,11 +1,28 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import PhotoBox from "./PhotoBox";  // Import PhotoBox component
 
 const tabs = ["Traditional", "Digital"];
 
-const GalleryTabs = () => {
+const GalleryTabs = ({ photos, onDeletePhoto, fetchPhotos }) => {
   const [activeTab, setActiveTab] = useState(0);
+  const [loading, setLoading] = useState(true);  // Loading state to manage the fetching state
   const containerRef = useRef(null);
+
+  useEffect(() => {
+    const loadPhotos = async () => {
+      setLoading(true);
+      try {
+        await fetchPhotos(); // Fetch the photos here
+      } catch (error) {
+        console.error("Failed to fetch photos:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPhotos();
+  }, [fetchPhotos]); // Runs when component mounts
 
   const handleSwipe = (event, info) => {
     const offset = info.offset.x;
@@ -16,6 +33,16 @@ const GalleryTabs = () => {
       setActiveTab(activeTab - 1);
     }
   };
+
+  // Filter photos based on the active tab
+  const filteredPhotos = photos.filter((photo) => {
+    if (tabs[activeTab] === "Traditional") {
+      return photo.category === "Traditional";
+    } else if (tabs[activeTab] === "Digital") {
+      return photo.category === "Digital";
+    }
+    return true;  // Default for all other cases
+  });
 
   return (
     <div className="tabs-wrapper" style={{ overflow: "hidden" }}>
@@ -69,8 +96,12 @@ const GalleryTabs = () => {
             }}
           >
             <h2>{tabs[activeTab]} Gallery</h2>
-            {/* Replace this with actual filtered gallery content */}
-            <p>This is the {tabs[activeTab].toLowerCase()} artwork section.</p>
+            {/* Pass the loading state and filtered photos to PhotoBox */}
+            <PhotoBox 
+              photos={filteredPhotos} 
+              loading={loading}  // Use the loading state here
+              onDeletePhoto={onDeletePhoto}  // Handle photo deletion
+            />
           </motion.div>
         </AnimatePresence>
       </div>

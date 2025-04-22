@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import PlaceholderCard from "./PlaceholderCard";
 import "../App.css";
 
-const Photobox = ({ photos, loading, onDeletePhoto }) => {
+const PhotoBox = ({ photos, loading, onDeletePhoto, selectedTab }) => {
   // Updated breakpoints for responsive columns
   const breakpointColumnsObj = {
     default: 5,    // 5 columns on large screens (laptop/desktop)
@@ -12,6 +12,17 @@ const Photobox = ({ photos, loading, onDeletePhoto }) => {
     900: 3,        // 3 columns on tablets
     600: 2         // 2 columns on all phones
   };
+
+  // Filter photos based on selected tab
+  const filteredPhotos = photos.filter((photo) => {
+    if (selectedTab === 'gallery') {
+      return photo.location === 'gallery'; // Assuming photo has a 'location' field
+    }
+    if (selectedTab === 'profile') {
+      return photo.location === 'profile'; // Assuming photo has a 'location' field
+    }
+    return true; // Default case for other tabs
+  });
 
   if (loading) {
     return (
@@ -41,7 +52,7 @@ const Photobox = ({ photos, loading, onDeletePhoto }) => {
       className="masonry-grid"
       columnClassName="masonry-grid_column"
     >
-      {photos.map((photo) => {
+      {filteredPhotos.map((photo) => {
         if (!photo._id || !photo.url) return null;
 
         return (
@@ -84,4 +95,4 @@ const Photobox = ({ photos, loading, onDeletePhoto }) => {
   );
 };
 
-export default Photobox;
+export default PhotoBox;

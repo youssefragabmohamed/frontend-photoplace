@@ -1,39 +1,43 @@
 import React, { useState, useRef } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faCloudUploadAlt } from '@fortawesome/free-solid-svg-icons';
+import GalleryTabs from './GalleryTabs'; // Import GalleryTabs component
 import '../App.css'; // Use App.css instead of UploadPhoto.css
 
-const UploadPhoto = ({ onUpload, onClose }) => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState(null);
-  const [error, setError] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef(null);
+const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
+  const [title, setTitle] = useState("");  // For the title of the uploaded photo
+  const [description, setDescription] = useState("");  // For the description of the uploaded photo
+  const [file, setFile] = useState(null);  // The file being uploaded
+  const [preview, setPreview] = useState(null);  // The file preview (for images)
+  const [error, setError] = useState("");  // To store any error messages
+  const [isUploading, setIsUploading] = useState(false);  // To track upload status
+  const [isDragging, setIsDragging] = useState(false);  // For drag-and-drop
+  const [selectedTab, setSelectedTab] = useState('gallery');  // Tab for categorizing the photo (Gallery or Profile)
 
+  const fileInputRef = useRef(null);  // Ref to file input for browsing files
+
+  // Handle file changes
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
 
-    // Validate file type
+    // Validate file type (image)
     const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!validTypes.includes(selectedFile.type)) {
       setError("Please upload a valid image file (JPEG, PNG, GIF, WEBP)");
       return;
     }
 
-    // Validate file size (10MB)
+    // Validate file size (max 10MB)
     if (selectedFile.size > 10 * 1024 * 1024) {
       setError("File size too large (max 10MB)");
       return;
     }
 
     setFile(selectedFile);
-    setError("");
+    setError("");  // Clear previous error
 
-    // Create preview
+    // Generate image preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setPreview(reader.result);
@@ -41,31 +45,36 @@ const UploadPhoto = ({ onUpload, onClose }) => {
     reader.readAsDataURL(selectedFile);
   };
 
+  // Handle drag over event for drag-and-drop
   const handleDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
   };
 
+  // Handle drag leave event
   const handleDragLeave = () => {
     setIsDragging(false);
   };
 
+  // Handle drop event for drag-and-drop
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       fileInputRef.current.files = e.dataTransfer.files;
       handleFileChange({ target: { files: e.dataTransfer.files } });
     }
   };
 
+  // Handle form submission (photo upload)
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    
+    setError("");  // Clear previous error
+
+    // Validate that a file is selected and title is provided
     if (!file) {
       setError("Please select an image file");
       return;
@@ -76,27 +85,34 @@ const UploadPhoto = ({ onUpload, onClose }) => {
       return;
     }
 
+    // Start the uploading process
     setIsUploading(true);
+    setLoading(true);  // Set loading state to true when uploading
 
     try {
       const result = await onUpload({
         file,
         title,
-        description
+        description,
+        location: selectedTab,  // Sending location (tab) as part of the upload info
       });
 
       if (result && result.success) {
-        resetForm();
-        if (onClose) onClose();
+        // Update photos list after successful upload
+        setPhotos(prevPhotos => [...prevPhotos, result.photo]);  
+        resetForm();  // Reset form fields
+        if (onClose) onClose();  // Close the upload modal if it's open
       }
     } catch (error) {
       console.error("Upload error:", error);
       setError(error.message || "Upload failed. Please try again.");
     } finally {
       setIsUploading(false);
+      setLoading(false);  // Reset loading state after the upload
     }
   };
 
+  // Reset form fields after upload
   const resetForm = () => {
     setTitle("");
     setDescription("");
@@ -121,19 +137,20 @@ const UploadPhoto = ({ onUpload, onClose }) => {
       {error && <div className="error-message">{error}</div>}
 
       <form onSubmit={handleSubmit} className="upload-form">
+        {/* Show preview if a photo is selected */}
         {preview ? (
           <div className="preview-container">
             <div className="image-wrapper">
-              <img 
-                src={preview} 
-                alt="Preview" 
-                className="preview-image" 
+              <img
+                src={preview}
+                alt="Preview"
+                className="preview-image"
                 style={{ maxHeight: '400px', maxWidth: '100%', objectFit: 'contain' }}
               />
             </div>
             <div className="upload-controls">
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => {
                   setPreview(null);
                   setFile(null);
@@ -148,7 +165,7 @@ const UploadPhoto = ({ onUpload, onClose }) => {
             </div>
           </div>
         ) : (
-          <div 
+          <div
             className={`dropzone ${isDragging ? 'drag-over' : ''}`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -159,7 +176,7 @@ const UploadPhoto = ({ onUpload, onClose }) => {
               <FontAwesomeIcon icon={faCloudUploadAlt} size="3x" />
               <p>Drag & drop photos here</p>
               <p>or</p>
-              <button 
+              <button
                 type="button"
                 className="browse-btn"
                 onClick={(e) => {
@@ -182,6 +199,7 @@ const UploadPhoto = ({ onUpload, onClose }) => {
           </div>
         )}
 
+        {/* Title and description inputs */}
         <div className="form-group">
           <label htmlFor="title">Title *</label>
           <input
@@ -207,8 +225,14 @@ const UploadPhoto = ({ onUpload, onClose }) => {
           />
         </div>
 
-        <button 
-          type="submit" 
+        {/* GalleryTabs component for selecting the upload destination */}
+        <GalleryTabs
+          selectedTab={selectedTab}
+          setSelectedTab={setSelectedTab}
+        />
+
+        <button
+          type="submit"
           className="btn btn-primary submit-btn"
           disabled={isUploading || !file || !title.trim()}
         >
