@@ -652,3 +652,38 @@ h3 { font-size: var(--text-lg); }
     padding: var(--space-lg);
   }
 }
+
+/* ===== TAB SELECTOR STYLES ===== */
+.tab-selector-container {
+  margin-bottom: 20px;
+}
+
+.tab-selector {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 10px;
+}
+
+.tab-label {
+  cursor: pointer;
+  padding: 10px 20px;
+  font-size: 18px;
+  border: 2px solid #ccc;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+}
+
+.tab-label.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #0056b3;
+}
+
+.tab-description {
+  font-size: 14px;
+  color: #666;
+}
+
+.tab-option {
+  display: inline-block;
+}

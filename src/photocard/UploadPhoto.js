@@ -11,7 +11,7 @@ const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
   const [error, setError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [selectedTab, setSelectedTab] = useState('gallery');
+  const [selectedTab, setSelectedTab] = useState('digital'); // Default to digital
 
   const fileInputRef = useRef(null);
 
@@ -83,7 +83,7 @@ const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
         file,
         title,
         description,
-        location: selectedTab, // Send location info
+        location: selectedTab, // Send location info (Digital/Traditional)
       });
 
       if (result?.success) {
@@ -121,6 +121,35 @@ const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
       </div>
 
       {error && <div className="error-message">{error}</div>}
+
+      {/* Tab selectors for Digital / Traditional */}
+      <div className="tab-selector-container">
+        <div className="tab-selector">
+          <label
+            className={`tab-label ${selectedTab === 'digital' ? 'active' : ''}`}
+            onClick={() => setSelectedTab('digital')}
+          >
+            <div className="tab-option">
+              <span>Digital</span>
+            </div>
+          </label>
+          <label
+            className={`tab-label ${selectedTab === 'traditional' ? 'active' : ''}`}
+            onClick={() => setSelectedTab('traditional')}
+          >
+            <div className="tab-option">
+              <span>Traditional</span>
+            </div>
+          </label>
+        </div>
+        <div className="tab-description">
+          {selectedTab === 'digital' ? (
+            <p>Upload photos from your digital collection (e.g., phone, camera).</p>
+          ) : (
+            <p>Upload scanned or photographed images of your traditional artwork.</p>
+          )}
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit} className="upload-form">
         {/* Photo Preview */}
@@ -203,30 +232,6 @@ const UploadPhoto = ({ onUpload, onClose, setLoading, setPhotos }) => {
             onChange={(e) => setDescription(e.target.value)}
             rows="3"
           />
-        </div>
-
-        {/* Tab selectors for choosing where the photo goes */}
-        <div className="tab-selector">
-          <label>
-            <input
-              type="radio"
-              name="tab"
-              value="gallery"
-              checked={selectedTab === 'gallery'}
-              onChange={() => setSelectedTab('gallery')}
-            />
-            Gallery
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="tab"
-              value="profile"
-              checked={selectedTab === 'profile'}
-              onChange={() => setSelectedTab('profile')}
-            />
-            Profile
-          </label>
         </div>
 
         <button
