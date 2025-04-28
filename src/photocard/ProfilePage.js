@@ -5,7 +5,7 @@ import { faEllipsis, faCamera } from '@fortawesome/free-solid-svg-icons';
 import Notification from "./Notification";
 import Photobox from "./Photobox";
 import { Swiper, SwiperSlide } from 'swiper/react';
-import 'swiper/swiper-bundle.min.css';
+import 'swiper/css';
 
 const ProfilePage = ({ user }) => {
   const { userId } = useParams();
