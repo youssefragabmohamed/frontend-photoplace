@@ -23,6 +23,7 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
   const [navLock, setNavLock] = useState(false);
+  const [savedPhotos, setSavedPhotos] = useState([]);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -129,8 +130,40 @@ const App = () => {
     }
   };
 
+  const fetchSavedPhotos = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/saved`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+      
+      if (!response.ok) throw new Error('Failed to load saved photos');
+      
+      const data = await response.json();
+      setSavedPhotos(data);
+    } catch (error) {
+      setNotification({ message: error.message, type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchPhotos();
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchPhotos();
+      fetchSavedPhotos();
+    }
   }, [user]);
 
   const getActiveRoute = () => {
@@ -299,6 +332,39 @@ const App = () => {
       throw error;
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSavePhoto = async (photoId) => {
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/save/${photoId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Save failed');
+      }
+      
+      const data = await response.json();
+      await fetchSavedPhotos();
+      setNotification({ 
+        message: data.message, 
+        type: "success" 
+      });
+      return data.isSaved;
+    } catch (error) {
+      setNotification({ 
+        message: error.message || "Save failed", 
+        type: "error" 
+      });
+      throw error;
     }
   };
 

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEllipsis, faCamera } from '@fortawesome/free-solid-svg-icons';
+import { faEllipsis, faCamera, faUserEdit, faLink, faBookmark as faBookmarkSolid } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark as faBookmarkRegular } from '@fortawesome/free-regular-svg-icons';
 import Notification from "./Notification";
 import Photobox from "./Photobox";
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -11,6 +12,7 @@ const ProfilePage = ({ user }) => {
   const { userId } = useParams();
   const [profileUser, setProfileUser] = useState(null);
   const [photos, setPhotos] = useState([]);
+  const [savedPhotos, setSavedPhotos] = useState([]);
   const [activeTab, setActiveTab] = useState('posts');
   const [isCurrentUser, setIsCurrentUser] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -18,10 +20,12 @@ const ProfilePage = ({ user }) => {
   const [showPortfolio, setShowPortfolio] = useState(false);
 
   // Editable state variables
-  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [newDescription, setNewDescription] = useState('');
   const [newLink, setNewLink] = useState('');
   const [newProfilePic, setNewProfilePic] = useState(null);
+  const [portfolioTitle, setPortfolioTitle] = useState('');
+  const [portfolioDesc, setPortfolioDesc] = useState('');
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -29,6 +33,7 @@ const ProfilePage = ({ user }) => {
       const token = localStorage.getItem('authToken');
 
       try {
+        // Fetch user profile
         const userRes = await fetch(`${process.env.REACT_APP_API_URL}/api/profile/${userId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -41,7 +46,10 @@ const ProfilePage = ({ user }) => {
         const userData = await userRes.json();
         setProfileUser(userData.user);
         setIsCurrentUser(user && user._id === userId);
+        setPortfolioTitle(userData.user.portfolioTitle || 'My Portfolio');
+        setPortfolioDesc(userData.user.portfolioDescription || '');
 
+        // Fetch user's posts
         const photosRes = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/user/${userId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -53,6 +61,21 @@ const ProfilePage = ({ user }) => {
         if (!photosRes.ok) throw new Error('Failed to fetch photos');
         const userPhotos = await photosRes.json();
         setPhotos(userPhotos);
+
+        // Fetch saved photos if it's the current user
+        if (user && user._id === userId) {
+          const savedRes = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/saved`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+          });
+
+          if (!savedRes.ok) throw new Error('Failed to fetch saved photos');
+          const savedData = await savedRes.json();
+          setSavedPhotos(savedData);
+        }
       } catch (error) {
         console.error("Profile fetch error:", error);
         setNotif({
@@ -105,6 +128,46 @@ const ProfilePage = ({ user }) => {
 
   const handleDeletePhoto = (photoId) => {
     setPhotos(prev => prev.filter(photo => photo._id !== photoId));
+    setSavedPhotos(prev => prev.filter(photo => photo._id !== photoId));
+  };
+
+  const handleSavePhoto = async (photoId) => {
+    const token = localStorage.getItem('authToken');
+    try {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/save/${photoId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      if (!res.ok) throw new Error('Failed to save photo');
+      const data = await res.json();
+
+      // Update saved photos list
+      if (isCurrentUser) {
+        const savedRes = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/saved`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        const savedData = await savedRes.json();
+        setSavedPhotos(savedData);
+      }
+
+      return data.isSaved;
+    } catch (error) {
+      console.error("Save photo error:", error);
+      setNotif({
+        message: "Failed to save photo",
+        type: "error"
+      });
+      throw error;
+    }
   };
 
   const handleProfilePicChange = (e) => {
@@ -115,17 +178,20 @@ const ProfilePage = ({ user }) => {
     const token = localStorage.getItem('authToken');
     const formData = new FormData();
 
-    // Add new profile picture if there's one
     if (newProfilePic) {
       formData.append('profilePic', newProfilePic);
     }
-
-    // Add new description and link if provided
     if (newDescription) {
       formData.append('bio', newDescription);
     }
     if (newLink) {
       formData.append('link', newLink);
+    }
+    if (portfolioTitle) {
+      formData.append('portfolioTitle', portfolioTitle);
+    }
+    if (portfolioDesc) {
+      formData.append('portfolioDescription', portfolioDesc);
     }
 
     try {
@@ -141,6 +207,7 @@ const ProfilePage = ({ user }) => {
       if (!res.ok) throw new Error('Failed to update profile');
       const updatedUser = await res.json();
       setProfileUser(updatedUser);
+      setIsEditing(false);
       setNotif({
         message: "Profile updated successfully",
         type: "success"
@@ -172,18 +239,25 @@ const ProfilePage = ({ user }) => {
   }
 
   return (
-    <div className="container">
+    <div className="container" style={{ maxWidth: '935px', margin: '0 auto' }}>
       {notif && <Notification message={notif.message} type={notif.type} onClose={() => setNotif(null)} />}
 
-      <div className="profile-header" style={{ marginBottom: "var(--space-xl)" }}>
-        <div className="flex" style={{ gap: "var(--space-xl)", alignItems: "flex-start" }}>
-          <div className="avatar-container" style={{ position: "relative" }}>
+      {/* Profile header remains the same */}
+      <div className="profile-header" style={{ padding: '20px 0' }}>
+        <div className="flex" style={{ gap: "30px", alignItems: "flex-start" }}>
+          <div className="avatar-container" style={{ position: "relative", flex: '0 0 auto' }}>
             <img
               src={profileUser.profilePic || '/default-profile.jpg'}
               alt={profileUser.username}
               className="avatar"
-              style={{ width: "100px", height: "100px", cursor: 'pointer' }}
-              onClick={() => document.getElementById("fileInput").click()}
+              style={{ 
+                width: "150px", 
+                height: "150px", 
+                borderRadius: '50%',
+                objectFit: 'cover',
+                border: '2px solid #fafafa'
+              }}
+              onClick={() => isCurrentUser && document.getElementById("fileInput").click()}
             />
             <input
               type="file"
@@ -193,91 +267,315 @@ const ProfilePage = ({ user }) => {
               onChange={handleProfilePicChange}
             />
             {isCurrentUser && (
-              <div className="change-photo-icon" style={{ position: "absolute", bottom: "10px", right: "10px" }}>
-                <FontAwesomeIcon icon={faCamera} style={{ color: 'white', fontSize: '20px' }} />
+              <div 
+                className="change-photo-icon" 
+                style={{ 
+                  position: "absolute", 
+                  bottom: "10px", 
+                  right: "10px",
+                  background: 'rgba(0,0,0,0.5)',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+              >
+                <FontAwesomeIcon icon={faCamera} style={{ color: 'white', fontSize: '16px' }} />
               </div>
             )}
           </div>
 
-          <div className="profile-stats" style={{ flex: 1 }}>
-            <div className="flex" style={{ alignItems: "center", gap: "var(--space-lg)", marginBottom: "var(--space-md)" }}>
-              <h2 style={{ fontSize: "var(--text-xl)", margin: 0 }}>{profileUser.username}</h2>
-              {!isCurrentUser && (
-                <button
-                  className={`btn ${profileUser.isFollowing ? 'btn-outline' : 'btn-primary'}`}
-                  onClick={handleFollowToggle}
-                  style={{ padding: "var(--space-xs) var(--space-md)" }}
-                >
-                  {profileUser.isFollowing ? 'Unfollow' : 'Follow'}
-                </button>
-              )}
-              {isCurrentUser && (
-                <button className="btn btn-outline" style={{ padding: "6px" }}>
-                  <FontAwesomeIcon icon={faEllipsis} />
-                </button>
-              )}
-            </div>
-
-            <div>
-              {isEditingDescription ? (
-                <div>
-                  <textarea
-                    value={newDescription || profileUser.bio || ''}
-                    onChange={(e) => setNewDescription(e.target.value)}
-                    style={{ width: "100%", height: "100px", marginBottom: "var(--space-md)" }}
-                  />
-                </div>
+          <div className="profile-info" style={{ flex: 1 }}>
+            <div className="flex" style={{ alignItems: "center", gap: "20px", marginBottom: "20px" }}>
+              <h2 style={{ fontSize: "28px", margin: 0, fontWeight: '300' }}>{profileUser.username}</h2>
+              
+              {isCurrentUser ? (
+                <>
+                  <button
+                    className="btn btn-outline"
+                    style={{ 
+                      padding: "5px 9px",
+                      borderRadius: '4px',
+                      fontWeight: '600'
+                    }}
+                    onClick={() => setIsEditing(!isEditing)}
+                  >
+                    Edit Profile
+                  </button>
+                  <button 
+                    className="btn btn-outline" 
+                    style={{ 
+                      padding: "5px 9px",
+                      borderRadius: '4px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    View Archive
+                  </button>
+                </>
               ) : (
-                <p className="text-muted">{profileUser.bio || "No bio yet"}</p>
+                <>
+                  <button
+                    className={`btn ${profileUser.isFollowing ? 'btn-outline' : 'btn-primary'}`}
+                    onClick={handleFollowToggle}
+                    style={{ 
+                      padding: "5px 9px",
+                      borderRadius: '4px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    {profileUser.isFollowing ? 'Following' : 'Follow'}
+                  </button>
+                  <button className="btn btn-outline" style={{ padding: "5px 9px" }}>
+                    Message
+                  </button>
+                </>
               )}
-
-              <div style={{ marginBottom: "var(--space-md)" }}>
-                {isEditingDescription && (
-                  <button className="btn btn-primary" onClick={handleSaveChanges}>
-                    Save Changes
-                  </button>
-                )}
-                {!isEditingDescription && (
-                  <button className="btn btn-outline" onClick={() => setIsEditingDescription(true)}>
-                    Edit Description
-                  </button>
-                )}
-              </div>
             </div>
 
-            <div>
-              {profileUser.link && (
-                <p>
-                  <strong>Link:</strong> <a href={profileUser.link} target="_blank" rel="noopener noreferrer">{profileUser.link}</a>
-                </p>
-              )}
+            <div className="profile-stats" style={{ display: 'flex', gap: '40px', marginBottom: '20px' }}>
+              <div><strong>{photos.length}</strong> posts</div>
+              <div><strong>{profileUser.followers || 0}</strong> followers</div>
+              <div><strong>{profileUser.following || 0}</strong> following</div>
+            </div>
 
-              {isEditingDescription && (
-                <input
-                  type="text"
-                  value={newLink || profileUser.link || ''}
-                  onChange={(e) => setNewLink(e.target.value)}
-                  placeholder="Add a link"
-                  style={{ width: "100%", marginBottom: "var(--space-md)" }}
+            <div className="profile-bio" style={{ marginBottom: '20px' }}>
+              {isEditing ? (
+                <textarea
+                  value={newDescription || profileUser.bio || ''}
+                  onChange={(e) => setNewDescription(e.target.value)}
+                  placeholder="Write a bio..."
+                  style={{ 
+                    width: "100%", 
+                    minHeight: "80px", 
+                    padding: '8px',
+                    border: '1px solid #dbdbdb',
+                    borderRadius: '3px',
+                    resize: 'vertical',
+                    marginBottom: '10px'
+                  }}
                 />
+              ) : (
+                <p style={{ fontSize: '16px', lineHeight: '1.5' }}>{profileUser.bio || "No bio yet"}</p>
+              )}
+              
+              {profileUser.link && (
+                <div style={{ marginTop: '10px' }}>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={newLink || profileUser.link || ''}
+                      onChange={(e) => setNewLink(e.target.value)}
+                      placeholder="Add a link"
+                      style={{ 
+                        width: "100%", 
+                        padding: '8px',
+                        border: '1px solid #dbdbdb',
+                        borderRadius: '3px'
+                      }}
+                    />
+                  ) : (
+                    <a 
+                      href={profileUser.link} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{ color: '#00376b', fontWeight: '600' }}
+                    >
+                      <FontAwesomeIcon icon={faLink} style={{ marginRight: '6px' }} />
+                      {profileUser.link.replace(/^https?:\/\//, '')}
+                    </a>
+                  )}
+                </div>
               )}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="profile-tabs" style={{ borderBottom: "1px solid var(--glass-border)", marginBottom: "var(--space-lg)" }}>
-        <div className="flex" style={{ justifyContent: "center", gap: "var(--space-xl)" }}>
+      {/* Edit section remains the same */}
+      {isEditing && (
+        <div className="edit-section" style={{ 
+          padding: '20px 0',
+          borderTop: '1px solid #dbdbdb',
+          borderBottom: '1px solid #dbdbdb',
+          marginBottom: '30px'
+        }}>
+          <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '15px' }}>Portfolio Settings</h3>
+          
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Portfolio Title</label>
+            <input
+              type="text"
+              value={portfolioTitle}
+              onChange={(e) => setPortfolioTitle(e.target.value)}
+              style={{ 
+                width: "100%", 
+                padding: '8px',
+                border: '1px solid #dbdbdb',
+                borderRadius: '3px'
+              }}
+            />
+          </div>
+          
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Portfolio Description</label>
+            <textarea
+              value={portfolioDesc}
+              onChange={(e) => setPortfolioDesc(e.target.value)}
+              style={{ 
+                width: "100%", 
+                minHeight: "100px", 
+                padding: '8px',
+                border: '1px solid #dbdbdb',
+                borderRadius: '3px',
+                resize: 'vertical'
+              }}
+            />
+          </div>
+          
+          <div className="flex" style={{ justifyContent: 'flex-end', gap: '10px' }}>
+            <button 
+              className="btn btn-outline" 
+              onClick={() => setIsEditing(false)}
+              style={{ padding: '5px 9px' }}
+            >
+              Cancel
+            </button>
+            <button 
+              className="btn btn-primary" 
+              onClick={handleSaveChanges}
+              style={{ padding: '5px 9px' }}
+            >
+              Save Changes
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Portfolio section remains the same */}
+      <div className="portfolio-section" style={{ 
+        padding: '20px 0',
+        borderTop: '1px solid #dbdbdb',
+        borderBottom: '1px solid #dbdbdb',
+        marginBottom: '30px'
+      }}>
+        <h3 style={{ 
+          fontSize: "18px", 
+          fontWeight: '600',
+          marginBottom: '15px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px'
+        }}>
+          {portfolioTitle}
+          {isCurrentUser && !isEditing && (
+            <FontAwesomeIcon 
+              icon={faUserEdit} 
+              style={{ color: '#8e8e8e', cursor: 'pointer' }} 
+              onClick={() => setIsEditing(true)}
+            />
+          )}
+        </h3>
+        
+        {!showPortfolio && (
+          <p style={{ 
+            fontSize: '14px', 
+            color: '#262626',
+            lineHeight: '1.5',
+            marginBottom: '15px',
+            whiteSpace: 'pre-line',
+            maxHeight: '60px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}>
+            {portfolioDesc || "No description available."}
+          </p>
+        )}
+        
+        {showPortfolio && (
+          <>
+            <p style={{ 
+              fontSize: '14px', 
+              color: '#262626',
+              lineHeight: '1.5',
+              marginBottom: '15px',
+              whiteSpace: 'pre-line'
+            }}>
+              {portfolioDesc || "No description available."}
+            </p>
+            
+            <div className="portfolio-gallery" style={{ margin: '20px 0' }}>
+              <Swiper
+                spaceBetween={16}
+                slidesPerView={3}
+                loop={true}
+                className="mySwiper"
+              >
+                {profileUser.portfolio && profileUser.portfolio.map((image, index) => (
+                  <SwiperSlide key={index}>
+                    <div style={{ paddingBottom: '100%', position: 'relative', overflow: 'hidden', borderRadius: '4px' }}>
+                      <img 
+                        src={image.url} 
+                        alt={image.title} 
+                        style={{ 
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }} 
+                      />
+                    </div>
+                    <h4 style={{ fontSize: '14px', margin: '8px 0 4px' }}>{image.title}</h4>
+                    <p style={{ fontSize: '12px', color: '#8e8e8e' }}>{image.description}</p>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            </div>
+          </>
+        )}
+        
+        {portfolioDesc && portfolioDesc.length > 100 && !showPortfolio && (
+          <button
+            onClick={() => setShowPortfolio(true)}
+            style={{
+              padding: 0,
+              background: 'none',
+              border: 'none',
+              color: '#8e8e8e',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer'
+            }}
+          >
+            Show more
+          </button>
+        )}
+      </div>
+
+      {/* Updated tabs section with Saved tab */}
+      <div className="profile-tabs" style={{ 
+        borderBottom: "1px solid var(--glass-border)", 
+        marginBottom: "30px" 
+      }}>
+        <div className="flex" style={{ justifyContent: "center", gap: "60px" }}>
           <button
             className={`tab-btn ${activeTab === 'posts' ? 'active' : ''}`}
             onClick={() => setActiveTab('posts')}
             style={{
-              padding: "var(--space-sm) 0",
+              padding: "16px 0",
               position: "relative",
               background: "none",
               border: "none",
               color: activeTab === 'posts' ? "var(--text-primary)" : "var(--text-secondary)",
-              fontWeight: activeTab === 'posts' ? "600" : "400"
+              fontWeight: activeTab === 'posts' ? "600" : "400",
+              textTransform: 'uppercase',
+              fontSize: '12px',
+              letterSpacing: '1px'
             }}
           >
             Posts
@@ -287,53 +585,61 @@ const ProfilePage = ({ user }) => {
                 bottom: 0,
                 left: 0,
                 right: 0,
-                height: "2px",
-                background: "var(--primary)"
+                height: "1px",
+                background: "#262626"
               }}></div>
             )}
           </button>
+          {isCurrentUser && (
+            <button
+              className={`tab-btn ${activeTab === 'saved' ? 'active' : ''}`}
+              onClick={() => setActiveTab('saved')}
+              style={{
+                padding: "16px 0",
+                position: "relative",
+                background: "none",
+                border: "none",
+                color: activeTab === 'saved' ? "var(--text-primary)" : "var(--text-secondary)",
+                fontWeight: activeTab === 'saved' ? "600" : "400",
+                textTransform: 'uppercase',
+                fontSize: '12px',
+                letterSpacing: '1px'
+              }}
+            >
+              Saved
+              {activeTab === 'saved' && (
+                <div style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: "1px",
+                  background: "#262626"
+                }}></div>
+              )}
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="portfolio-section" style={{ marginBottom: 'var(--space-lg)' }}>
-        <h3 style={{ fontSize: "var(--text-lg)", fontWeight: '600' }}>Portfolio</h3>
-        <p>{profileUser.portfolioDescription || "No description available."}</p>
-
-        {showPortfolio ? (
-          <div className="portfolio-gallery">
-            <Swiper
-              spaceBetween={10}
-              slidesPerView={3}
-              loop={true}
-              className="mySwiper"
-            >
-              {profileUser.portfolio && profileUser.portfolio.map((image, index) => (
-                <SwiperSlide key={index}>
-                  <img src={image.url} alt={image.title} style={{ width: '100%', borderRadius: '8px' }} />
-                  <h4>{image.title}</h4>
-                  <p>{image.description}</p>
-                </SwiperSlide>
-              ))}
-            </Swiper>
-          </div>
-        ) : (
-          <button
-            onClick={() => setShowPortfolio(true)}
-            style={{
-              padding: "var(--space-sm) var(--space-lg)",
-              background: "var(--primary)",
-              color: "white",
-              borderRadius: "8px",
-              marginTop: 'var(--space-md)'
-            }}
-          >
-            Show More
-          </button>
-        )}
-      </div>
-
+      {/* Content based on active tab */}
       {activeTab === 'posts' && (
-        <Photobox photos={photos} loading={loading} onDeletePhoto={handleDeletePhoto} />
+        <Photobox 
+          photos={photos} 
+          loading={loading} 
+          onDeletePhoto={handleDeletePhoto} 
+          onSavePhoto={handleSavePhoto}
+          showSaveButton={true}
+        />
+      )}
+      {activeTab === 'saved' && isCurrentUser && (
+        <Photobox 
+          photos={savedPhotos} 
+          loading={loading} 
+          onDeletePhoto={handleDeletePhoto} 
+          onSavePhoto={handleSavePhoto}
+          showSaveButton={true}
+        />
       )}
     </div>
   );

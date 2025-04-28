@@ -3,8 +3,11 @@ import Masonry from "react-masonry-css";
 import { Link } from "react-router-dom";
 import PlaceholderCard from "./PlaceholderCard";
 import "../App.css";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBookmark as faBookmarkSolid } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark as faBookmarkRegular } from '@fortawesome/free-regular-svg-icons';
 
-const PhotoBox = ({ photos, loading, onDeletePhoto, selectedTab }) => {
+const PhotoBox = ({ photos, loading, onDeletePhoto, selectedTab, onSavePhoto, savedPhotos }) => {
   // Updated breakpoints for better responsive columns
   const breakpointColumnsObj = {
     default: 4,    // 4 columns on large screens
@@ -84,6 +87,30 @@ const PhotoBox = ({ photos, loading, onDeletePhoto, selectedTab }) => {
                     }}
                   >
                     Delete
+                  </button>
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onSavePhoto(photo._id);
+                    }}
+                    style={{
+                      position: 'absolute',
+                      bottom: '10px',
+                      right: '10px',
+                      background: 'rgba(0,0,0,0.5)',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '30px',
+                      height: '30px',
+                      color: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <FontAwesomeIcon icon={savedPhotos.includes(photo._id) ? faBookmarkSolid : faBookmarkRegular} />
                   </button>
                 </div>
               </Link>

@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faHeart, faComment, faBookmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faHeart, faComment, faBookmark as faBookmarkSolid } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark as faBookmarkRegular } from '@fortawesome/free-regular-svg-icons';
+import Notification from "./Notification";
 
 const PhotoDetail = () => {
   const [photo, setPhoto] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isSaved, setIsSaved] = useState(false);
+  const [notif, setNotif] = useState(null);
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -26,6 +30,20 @@ const PhotoDetail = () => {
         
         const data = await response.json();
         setPhoto(data);
+        
+        // Check if photo is saved
+        const userResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/profile/me`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          setIsSaved(userData.user.savedPhotos.includes(data._id));
+        }
       } catch (err) {
         setError(err.message);
       } finally {
@@ -35,12 +53,42 @@ const PhotoDetail = () => {
     fetchPhoto();
   }, [id]);
 
+  const handleSavePhoto = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/save/${id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) throw new Error('Failed to save photo');
+      
+      const data = await response.json();
+      setIsSaved(data.isSaved);
+      setNotif({
+        message: data.isSaved ? "Photo saved!" : "Photo removed from saved",
+        type: "success"
+      });
+    } catch (err) {
+      setNotif({
+        message: err.message || "Failed to save photo",
+        type: "error"
+      });
+    }
+  };
+
   if (loading) return <div className="loading">Loading...</div>;
   if (error) return <div className="error">{error}</div>;
   if (!photo) return <div className="not-found">Photo not found</div>;
 
   return (
     <div className="photo-detail-container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+      {notif && <Notification message={notif.message} type={notif.type} onClose={() => setNotif(null)} />}
+      
       <button 
         onClick={() => navigate(-1)} 
         className="back-btn"
@@ -106,8 +154,15 @@ const PhotoDetail = () => {
             <button className="btn btn-outline">
               <FontAwesomeIcon icon={faComment} /> Comment
             </button>
-            <button className="btn btn-outline">
-              <FontAwesomeIcon icon={faBookmark} /> Save
+            <button 
+              className="btn btn-outline" 
+              onClick={handleSavePhoto}
+              style={{
+                color: isSaved ? 'var(--primary)' : 'inherit'
+              }}
+            >
+              <FontAwesomeIcon icon={isSaved ? faBookmarkSolid : faBookmarkRegular} /> 
+              {isSaved ? 'Saved' : 'Save'}
             </button>
           </div>
           
