@@ -1,6 +1,6 @@
 import React from "react";
 import Masonry from "react-masonry-css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import PlaceholderCard from "./PlaceholderCard";
 import "../App.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -8,6 +8,7 @@ import { faBookmark as faBookmarkSolid } from '@fortawesome/free-solid-svg-icons
 import { faBookmark as faBookmarkRegular } from '@fortawesome/free-regular-svg-icons';
 
 const PhotoBox = ({ photos, loading, onDeletePhoto, selectedTab, onSavePhoto, savedPhotos }) => {
+  const navigate = useNavigate();
   // Updated breakpoints for better responsive columns
   const breakpointColumnsObj = {
     default: 4,    // 4 columns on large screens
@@ -25,16 +26,9 @@ const PhotoBox = ({ photos, loading, onDeletePhoto, selectedTab, onSavePhoto, sa
 
   if (loading) {
     return (
-      <div className="masonry-container" style={{ minHeight: '500px' }}>
-        <Masonry
-          breakpointCols={breakpointColumnsObj}
-          className="masonry-grid"
-          columnClassName="masonry-grid_column"
-        >
-          {Array.from({ length: 10 }).map((_, index) => (
-            <PlaceholderCard key={`placeholder-${index}`} index={index} />
-          ))}
-        </Masonry>
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Loading photos...</p>
       </div>
     );
   }
@@ -143,8 +137,22 @@ const PhotoBox = ({ photos, loading, onDeletePhoto, selectedTab, onSavePhoto, sa
       
       {/* Empty state when no photos */}
       {filteredPhotos.length === 0 && (
-        <div className="empty-gallery">
-          <p>No photos found in this category</p>
+        <div className="empty-gallery" style={{
+          textAlign: 'center',
+          padding: '40px',
+          color: 'var(--text-secondary)'
+        }}>
+          <p style={{ fontSize: '1.2rem', marginBottom: '10px' }}>
+            {selectedTab === 'saved' ? 'No saved photos yet' : 'No photos found'}
+          </p>
+          {selectedTab !== 'saved' && (
+            <button 
+              className="btn btn-primary"
+              onClick={() => navigate('/upload')}
+            >
+              Upload Your First Photo
+            </button>
+          )}
         </div>
       )}
     </div>

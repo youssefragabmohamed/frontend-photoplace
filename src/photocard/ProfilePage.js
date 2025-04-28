@@ -58,9 +58,13 @@ const ProfilePage = ({ user }) => {
           credentials: 'include'
         });
 
-        if (!photosRes.ok) throw new Error('Failed to fetch photos');
+        if (!photosRes.ok) {
+          // Handle empty state gracefully
+          setPhotos([]);
+          throw new Error(photosRes.status === 404 ? 'No photos found' : 'Failed to fetch photos');
+        }
         const userPhotos = await photosRes.json();
-        setPhotos(userPhotos);
+        setPhotos(userPhotos || []);
 
         // Fetch saved photos if it's the current user
         if (user && user._id === userId) {

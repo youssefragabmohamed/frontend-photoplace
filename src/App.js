@@ -289,6 +289,7 @@ const App = () => {
       }
 
       const data = await response.json();
+      // Refresh both photos and filteredPhotos
       await fetchPhotos();
       setNotification({ 
         message: "Photo uploaded successfully!", 

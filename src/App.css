@@ -819,3 +819,45 @@ h3 { font-size: var(--text-lg); }
     padding: 0.75rem 0.5rem;
   }
 }
+
+/* ProfilePage mobile styles */
+@media (max-width: 768px) {
+  .profile-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .avatar-container {
+    margin-bottom: 20px;
+  }
+  
+  .profile-info {
+    width: 100%;
+  }
+  
+  .profile-stats {
+    justify-content: center;
+    gap: 20px;
+  }
+  
+  .portfolio-section {
+    padding: 15px;
+  }
+  
+  .profile-tabs .flex {
+    gap: 30px;
+  }
+}
+
+/* PhotoBox mobile styles */
+@media (max-width: 600px) {
+  .masonry-grid {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .masonry-item {
+    margin-bottom: 15px;
+  }
+}
