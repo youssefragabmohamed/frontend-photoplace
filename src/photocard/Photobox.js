@@ -112,6 +112,28 @@ const PhotoBox = ({ photos, loading, onDeletePhoto, selectedTab, onSavePhoto, sa
                   >
                     <FontAwesomeIcon icon={savedPhotos.includes(photo._id) ? faBookmarkSolid : faBookmarkRegular} />
                   </button>
+                  {showSaveButton && (
+                    <button 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onAddToPortfolio(photo._id);
+                      }}
+                      style={{
+                        position: 'absolute',
+                        bottom: '50px',
+                        right: '10px',
+                        background: 'rgba(0,0,0,0.5)',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '5px 10px',
+                        color: 'white',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Add to Portfolio
+                    </button>
+                  )}
                 </div>
               </Link>
             </div>

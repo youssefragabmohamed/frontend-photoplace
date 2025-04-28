@@ -220,6 +220,48 @@ const ProfilePage = ({ user }) => {
     }
   };
 
+  const handleAddToPortfolio = async (photoId) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/profile/portfolio/${photoId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      if (!res.ok) throw new Error('Failed to add to portfolio');
+      const updatedUser = await res.json();
+      setProfileUser(updatedUser);
+      setNotif({ message: "Added to portfolio!", type: "success" });
+    } catch (error) {
+      setNotif({ message: error.message, type: "error" });
+    }
+  };
+
+  const handleRemoveFromPortfolio = async (photoId) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/profile/portfolio/${photoId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      if (!res.ok) throw new Error('Failed to remove from portfolio');
+      const updatedUser = await res.json();
+      setProfileUser(updatedUser);
+      setNotif({ message: "Removed from portfolio", type: "success" });
+    } catch (error) {
+      setNotif({ message: error.message, type: "error" });
+    }
+  };
+
   if (loading) {
     return (
       <div className="container">
