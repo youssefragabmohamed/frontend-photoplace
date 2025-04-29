@@ -198,22 +198,40 @@ const App = () => {
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/signup`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(formData),
         credentials: 'include'
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Signup failed");
+      
+      if (!response.ok) {
+        // Handle specific error messages from backend
+        const errorMsg = data.message || 
+          (data.error ? data.error : "Signup failed");
+        throw new Error(errorMsg);
+      }
 
+      // Store both token and user data
       storeAuthData(data.token, data.user);
       setUser(data.user);
-      setNotification({ message: "Account created!", type: "success" });
-      navigate('/', { replace: true });
-      return { success: true, data };
+      setNotification({ 
+        message: "Account created successfully!", 
+        type: "success" 
+      });
+      
+      return { 
+        success: true, 
+        data 
+      };
     } catch (error) {
-      setNotification({ message: error.message || "Signup failed", type: "error" });
-      throw error;
+      setNotification({ 
+        message: error.message || "Signup failed", 
+        type: "error" 
+      });
+      throw error; // Re-throw to be caught by SignUpPage
     } finally {
       setLoading(false);
     }

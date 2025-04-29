@@ -3,27 +3,44 @@ import { useNavigate } from "react-router-dom";
 import { NavLink } from "react-router-dom";
 
 const SignUpPage = ({ onSignUp }) => {
-  const [form, setForm] = useState({ username: "", email: "", password: "" });
-  const [status, setStatus] = useState({ loading: false, error: null });
+  const [form, setForm] = useState({ 
+    username: "", 
+    email: "", 
+    password: "" 
+  });
+  const [status, setStatus] = useState({ 
+    loading: false, 
+    error: null 
+  });
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus({ loading: true, error: null });
+    
     try {
-      const { success } = await onSignUp(form);
-      if (success) {
+      const result = await onSignUp(form);
+      if (result && result.success) {
         navigate("/");
       }
     } catch (error) {
-      setStatus({ loading: false, error: error.message });
+      setStatus({ 
+        loading: false, 
+        error: error.message || "Registration failed. Please try again." 
+      });
     }
   };
 
   return (
     <div className="container">
-      <div className="card" style={{ maxWidth: "400px", margin: "var(--space-xl) auto", padding: "var(--space-lg)" }}>
-        <h1 style={{ textAlign: "center", marginBottom: "var(--space-lg)" }}>Sign Up</h1>
+      <div className="card" style={{ 
+        maxWidth: "400px", 
+        margin: "var(--space-xl) auto", 
+        padding: "var(--space-lg)" 
+      }}>
+        <h1 style={{ textAlign: "center", marginBottom: "var(--space-lg)" }}>
+          Sign Up
+        </h1>
         
         {status.error && (
           <div className="notification error" style={{ marginBottom: "var(--space-md)" }}>
@@ -31,7 +48,11 @@ const SignUpPage = ({ onSignUp }) => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="grid" style={{ gap: "var(--space-md)" }}>
+        <form 
+          onSubmit={handleSubmit} 
+          className="grid" 
+          style={{ gap: "var(--space-md)" }}
+        >
           <input
             type="text"
             name="username"
@@ -73,7 +94,9 @@ const SignUpPage = ({ onSignUp }) => {
         <div style={{ marginTop: "var(--space-lg)", textAlign: "center" }}>
           <p className="text-muted">
             Already have an account? {' '}
-            <NavLink to="/login" style={{ color: "var(--primary)" }}>Log in</NavLink>
+            <NavLink to="/login" style={{ color: "var(--primary)" }}>
+              Log in
+            </NavLink>
           </p>
         </div>
       </div>
