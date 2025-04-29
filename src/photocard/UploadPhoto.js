@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faCloudUploadAlt } from '@fortawesome/free-solid-svg-icons';
 import '../App.css';
 
-const UploadPhoto = ({ onUpload, onClose }) => {
+const UploadPhoto = ({ onUpload, onClose, refreshPhotos }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState(null);
@@ -82,6 +82,7 @@ const UploadPhoto = ({ onUpload, onClose }) => {
 
       if (result?.success) {
         resetForm();
+        if (refreshPhotos) refreshPhotos(); // Trigger photo refresh
         if (onClose) onClose();
       } else {
         setError("Upload failed, please try again.");

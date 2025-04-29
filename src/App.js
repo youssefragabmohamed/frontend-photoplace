@@ -144,12 +144,22 @@ const App = () => {
         credentials: 'include'
       });
       
+      if (response.status === 404) {
+        // No saved photos is a valid state
+        setSavedPhotos([]);
+        return;
+      }
+      
       if (!response.ok) throw new Error('Failed to load saved photos');
       
       const data = await response.json();
-      setSavedPhotos(data);
+      setSavedPhotos(data || []); // Ensure it's always an array
     } catch (error) {
-      setNotification({ message: error.message, type: 'error' });
+      if (error.message.includes('404')) {
+        setSavedPhotos([]); // Handle 404 as empty array
+      } else {
+        setNotification({ message: error.message, type: 'error' });
+      }
     } finally {
       setLoading(false);
     }

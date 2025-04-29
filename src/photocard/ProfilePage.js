@@ -285,13 +285,29 @@ const ProfilePage = ({ user }) => {
   }
 
   return (
-    <div className="container" style={{ maxWidth: '935px', margin: '0 auto' }}>
+    <div className="container" style={{ 
+      maxWidth: '935px', 
+      margin: '0 auto',
+      padding: '0 15px', // Add padding for mobile
+      boxSizing: 'border-box' // Ensure padding is included in width
+    }}>
       {notif && <Notification message={notif.message} type={notif.type} onClose={() => setNotif(null)} />}
 
-      {/* Profile header remains the same */}
-      <div className="profile-header" style={{ padding: '20px 0' }}>
-        <div className="flex" style={{ gap: "30px", alignItems: "flex-start" }}>
-          <div className="avatar-container" style={{ position: "relative", flex: '0 0 auto' }}>
+      {/* Updated Profile Header */}
+      <div className="profile-header" style={{ 
+        padding: '20px 0',
+        overflow: 'hidden' // Prevent overflow
+      }}>
+        <div className="flex" style={{ 
+          flexDirection: window.innerWidth < 768 ? 'column' : 'row', // Stack on mobile
+          gap: "20px", // Reduced gap for mobile
+          alignItems: "flex-start"
+        }}>
+          <div className="avatar-container" style={{ 
+            position: "relative", 
+            flex: '0 0 auto',
+            alignSelf: 'center' // Center on mobile
+          }}>
             <img
               src={profileUser.profilePic || '/default-profile.jpg'}
               alt={profileUser.username}
@@ -334,7 +350,11 @@ const ProfilePage = ({ user }) => {
             )}
           </div>
 
-          <div className="profile-info" style={{ flex: 1 }}>
+          <div className="profile-info" style={{ 
+            flex: 1,
+            width: '100%', // Full width on mobile
+            overflow: 'hidden' // Prevent text overflow
+          }}>
             <div className="flex" style={{ alignItems: "center", gap: "20px", marginBottom: "20px" }}>
               <h2 style={{ fontSize: "28px", margin: 0, fontWeight: '300' }}>{profileUser.username}</h2>
               
@@ -382,13 +402,21 @@ const ProfilePage = ({ user }) => {
               )}
             </div>
 
-            <div className="profile-stats" style={{ display: 'flex', gap: '40px', marginBottom: '20px' }}>
+            <div className="profile-stats" style={{ 
+              display: 'flex', 
+              gap: window.innerWidth < 768 ? '20px' : '40px', // Smaller gap on mobile
+              marginBottom: '20px',
+              justifyContent: window.innerWidth < 768 ? 'space-around' : 'flex-start' // Better spacing on mobile
+            }}>
               <div><strong>{photos.length}</strong> posts</div>
               <div><strong>{profileUser.followers || 0}</strong> followers</div>
               <div><strong>{profileUser.following || 0}</strong> following</div>
             </div>
 
-            <div className="profile-bio" style={{ marginBottom: '20px' }}>
+            <div className="profile-bio" style={{ 
+              marginBottom: '20px',
+              wordBreak: 'break-word' // Prevent text overflow
+            }}>
               {isEditing ? (
                 <textarea
                   value={newDescription || profileUser.bio || ''}

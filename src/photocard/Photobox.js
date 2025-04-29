@@ -7,22 +7,15 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBookmark as faBookmarkSolid } from '@fortawesome/free-solid-svg-icons';
 import { faBookmark as faBookmarkRegular } from '@fortawesome/free-regular-svg-icons';
 
-const PhotoBox = ({ photos, loading, onDeletePhoto, selectedTab, onSavePhoto, savedPhotos }) => {
+const PhotoBox = ({ photos, loading, onDeletePhoto, selectedTab, onSavePhoto, showSaveButton, savedPhotos, refreshPhotos }) => {
   const navigate = useNavigate();
-  // Updated breakpoints for better responsive columns
-  const breakpointColumnsObj = {
-    default: 4,    // 4 columns on large screens
-    1200: 3,       // 3 columns on medium-large screens
-    900: 2,        // 2 columns on tablets
-    600: 1         // 1 column on phones (we'll override this)
-  };
 
-  // Filter photos based on selected tab
-  const filteredPhotos = photos.filter((photo) => {
-    if (selectedTab === 'digital') return photo.location === 'digital';
-    if (selectedTab === 'traditional') return photo.location === 'traditional';
-    return true;
-  });
+  const breakpointColumnsObj = {
+    default: 4,
+    1200: 3,
+    900: 2,
+    600: 1
+  };
 
   if (loading) {
     return (
@@ -33,12 +26,42 @@ const PhotoBox = ({ photos, loading, onDeletePhoto, selectedTab, onSavePhoto, sa
     );
   }
 
+  if (photos.length === 0) {
+    return (
+      <div className="empty-gallery" style={{
+        textAlign: 'center',
+        padding: '40px',
+        color: 'var(--text-secondary)'
+      }}>
+        <p style={{ fontSize: '1.2rem', marginBottom: '10px' }}>
+          {selectedTab === 'saved' ? 'No saved photos yet' : 'No photos found'}
+        </p>
+        {selectedTab !== 'saved' && (
+          <button 
+            className="btn btn-primary"
+            onClick={() => navigate('/upload')}
+          >
+            Upload Your First Photo
+          </button>
+        )}
+      </div>
+    );
+  }
+
   const handleDelete = (photoId, e) => {
     e.preventDefault();
     e.stopPropagation();
     if (window.confirm("Are you sure you want to delete this photo?")) {
       onDeletePhoto(photoId);
+      if (refreshPhotos) refreshPhotos(); // Refresh photos after deletion
     }
+  };
+
+  const handleSave = (photoId, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onSavePhoto(photoId);
+    if (refreshPhotos) refreshPhotos(); // Refresh photos after saving
   };
 
   return (
@@ -48,7 +71,7 @@ const PhotoBox = ({ photos, loading, onDeletePhoto, selectedTab, onSavePhoto, sa
         className="masonry-grid"
         columnClassName="masonry-grid_column"
       >
-        {filteredPhotos.map((photo) => {
+        {photos.map((photo) => {
           if (!photo._id || !photo.url) return null;
 
           return (
@@ -83,11 +106,7 @@ const PhotoBox = ({ photos, loading, onDeletePhoto, selectedTab, onSavePhoto, sa
                     Delete
                   </button>
                   <button 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onSavePhoto(photo._id);
-                    }}
+                    onClick={(e) => handleSave(photo._id, e)}
                     style={{
                       position: 'absolute',
                       bottom: '10px',
@@ -112,6 +131,7 @@ const PhotoBox = ({ photos, loading, onDeletePhoto, selectedTab, onSavePhoto, sa
                         e.preventDefault();
                         e.stopPropagation();
                         onAddToPortfolio(photo._id);
+                        if (refreshPhotos) refreshPhotos(); // Refresh photos after adding to portfolio
                       }}
                       style={{
                         position: 'absolute',
@@ -134,27 +154,6 @@ const PhotoBox = ({ photos, loading, onDeletePhoto, selectedTab, onSavePhoto, sa
           );
         })}
       </Masonry>
-      
-      {/* Empty state when no photos */}
-      {filteredPhotos.length === 0 && (
-        <div className="empty-gallery" style={{
-          textAlign: 'center',
-          padding: '40px',
-          color: 'var(--text-secondary)'
-        }}>
-          <p style={{ fontSize: '1.2rem', marginBottom: '10px' }}>
-            {selectedTab === 'saved' ? 'No saved photos yet' : 'No photos found'}
-          </p>
-          {selectedTab !== 'saved' && (
-            <button 
-              className="btn btn-primary"
-              onClick={() => navigate('/upload')}
-            >
-              Upload Your First Photo
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 };
