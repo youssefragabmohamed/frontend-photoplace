@@ -514,4 +514,27 @@ const App = () => {
   );
 };
 
+export const onSignUp = async ({ username, email, password }) => {
+  try {
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/signup`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username, email, password })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Signup failed');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Signup error:', error);
+    throw error;
+  }
+};
+
 export default App;
