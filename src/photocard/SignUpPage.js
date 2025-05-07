@@ -10,23 +10,63 @@ const SignUpPage = ({ onSignUp }) => {
   });
   const [status, setStatus] = useState({ 
     loading: false, 
-    error: null 
+    error: null,
+    success: false
   });
   const navigate = useNavigate();
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setStatus({ loading: true, error: null });
-    
+    setStatus({ loading: true, error: null, success: false });
+
+    // Basic client-side validation
+    if (!form.username || !form.email || !form.password) {
+      setStatus({
+        loading: false,
+        error: "All fields are required",
+        success: false
+      });
+      return;
+    }
+
+    if (form.password.length < 6) {
+      setStatus({
+        loading: false,
+        error: "Password must be at least 6 characters",
+        success: false
+      });
+      return;
+    }
+
     try {
-      const result = await onSignUp(form);
+      const result = await onSignUp({
+        username: form.username.trim(),
+        email: form.email.trim(),
+        password: form.password
+      });
+
       if (result && result.success) {
-        navigate("/");
+        setStatus({
+          loading: false,
+          error: null,
+          success: true
+        });
+        navigate("/", { replace: true });
       }
     } catch (error) {
+      console.error("Signup error:", error);
       setStatus({ 
         loading: false, 
-        error: error.message || "Registration failed. Please try again." 
+        error: error.message || "Registration failed. Please try again.",
+        success: false
       });
     }
   };
@@ -48,6 +88,12 @@ const SignUpPage = ({ onSignUp }) => {
           </div>
         )}
 
+        {status.success && (
+          <div className="notification success" style={{ marginBottom: "var(--space-md)" }}>
+            Account created successfully! Redirecting...
+          </div>
+        )}
+
         <form 
           onSubmit={handleSubmit} 
           className="grid" 
@@ -58,36 +104,44 @@ const SignUpPage = ({ onSignUp }) => {
             name="username"
             placeholder="Username"
             value={form.username}
-            onChange={(e) => setForm({ ...form, username: e.target.value })}
+            onChange={handleChange}
             className="form-input"
             required
             minLength={3}
+            autoComplete="username"
           />
           <input
             type="email"
             name="email"
             placeholder="Email"
             value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            onChange={handleChange}
             className="form-input"
             required
+            autoComplete="email"
           />
           <input
             type="password"
             name="password"
-            placeholder="Password"
+            placeholder="Password (min 6 characters)"
             value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            onChange={handleChange}
             className="form-input"
             required
             minLength={6}
+            autoComplete="new-password"
           />
           <button 
             type="submit" 
             className="btn btn-primary"
             disabled={status.loading}
           >
-            {status.loading ? "Creating account..." : "Sign Up"}
+            {status.loading ? (
+              <>
+                <span className="spinner"></span>
+                Creating account...
+              </>
+            ) : "Sign Up"}
           </button>
         </form>
 
