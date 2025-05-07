@@ -205,33 +205,35 @@ const App = () => {
         credentials: 'include'
       });
 
+      // First check if response exists and is ok
+      if (!response) {
+        throw new Error("No response from server");
+      }
+
+      // Handle non-JSON responses
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        throw new Error(text || "Invalid server response");
+      }
+
       const data = await response.json();
       
       if (!response.ok) {
-        // Handle specific error messages from backend
-        const errorMsg = data.message || 
-          (data.error ? data.error : "Signup failed");
-        throw new Error(errorMsg);
+        throw new Error(data.message || "Signup failed");
       }
 
       // Store both token and user data
       storeAuthData(data.token, data.user);
       setUser(data.user);
-      setNotification({ 
-        message: "Account created successfully!", 
-        type: "success" 
-      });
       
       return { 
         success: true, 
         data 
       };
     } catch (error) {
-      setNotification({ 
-        message: error.message || "Signup failed", 
-        type: "error" 
-      });
-      throw error; // Re-throw to be caught by SignUpPage
+      console.error("Signup error:", error);
+      throw error;
     } finally {
       setLoading(false);
     }
