@@ -202,19 +202,19 @@ const App = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
-        credentials: 'include'
+        credentials: 'include' // Important for cookies
       });
 
-      // First check if response exists and is ok
+      // First check if we got any response at all
       if (!response) {
-        throw new Error("No response from server");
+        throw new Error("Network error - no response from server");
       }
 
       // Handle non-JSON responses
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
         const text = await response.text();
-        throw new Error(text || "Invalid server response");
+        throw new Error(text || "Invalid server response format");
       }
 
       const data = await response.json();
