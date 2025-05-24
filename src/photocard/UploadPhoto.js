@@ -58,7 +58,7 @@ const UploadPhoto = ({ onUpload, onClose, refreshPhotos }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setError(""); // Clear any previous errors
 
     if (!file) {
       setError("Please select an image file");
@@ -70,20 +70,19 @@ const UploadPhoto = ({ onUpload, onClose, refreshPhotos }) => {
       return;
     }
 
-    setIsUploading(true);
-
     try {
+      setIsUploading(true);
       const result = await onUpload({
         file,
         title,
         description,
-        location: selectedTab,
+        location: selectedTab
       });
 
       if (result?.success) {
         resetForm();
         if (refreshPhotos) refreshPhotos(); // Trigger photo refresh
-        if (onClose) onClose();
+        if (onClose) onClose(); // Close the upload modal if applicable
       } else {
         setError("Upload failed, please try again.");
       }

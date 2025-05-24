@@ -100,16 +100,17 @@ const App = () => {
 
   // Updated fetchPhotos function
   const fetchPhotos = async (category = null) => {
-    if (!user) return;
-    
-    setLoading(true);
     try {
       const token = getAuthToken();
+      if (!token) {
+        throw new Error("Authentication required");
+      }
+
       let url = `${process.env.REACT_APP_API_URL}/api/photos`;
       if (category) {
         url += `?location=${category}`;
       }
-      
+
       const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -117,14 +118,21 @@ const App = () => {
         },
         credentials: 'include'
       });
-      
-      if (!response.ok) throw new Error('Failed to load photos');
-      
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to load photos');
+      }
+
       const data = await response.json();
       setPhotos(data);
-      setFilteredPhotos(data);
+      setFilteredPhotos(data); // Update filtered photos as well
     } catch (error) {
-      setNotification({ message: error.message, type: 'error' });
+      console.error('Fetch photos error:', error);
+      setNotification({
+        message: error.message || 'Failed to load photos',
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }
