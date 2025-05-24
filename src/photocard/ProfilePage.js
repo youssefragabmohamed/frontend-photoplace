@@ -46,8 +46,6 @@ const ProfilePage = ({ user }) => {
         const userData = await userRes.json();
         setProfileUser(userData.user);
         setIsCurrentUser(user && user._id === userId);
-        setPortfolioTitle(userData.user.portfolioTitle || 'My Portfolio');
-        setPortfolioDesc(userData.user.portfolioDescription || '');
 
         // Fetch user's posts
         const photosRes = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/user/${userId}`, {
@@ -59,8 +57,7 @@ const ProfilePage = ({ user }) => {
         });
 
         if (!photosRes.ok) {
-          // Handle empty state gracefully
-          setPhotos([]);
+          setPhotos([]); // Handle empty state gracefully
           throw new Error(photosRes.status === 404 ? 'No photos found' : 'Failed to fetch photos');
         }
         const userPhotos = await photosRes.json();
@@ -76,14 +73,17 @@ const ProfilePage = ({ user }) => {
             credentials: 'include'
           });
 
-          if (!savedRes.ok) throw new Error('Failed to fetch saved photos');
+          if (!savedRes.ok) {
+            setSavedPhotos([]); // Handle empty state gracefully
+            throw new Error('Failed to fetch saved photos');
+          }
           const savedData = await savedRes.json();
-          setSavedPhotos(savedData);
+          setSavedPhotos(savedData || []);
         }
       } catch (error) {
         console.error("Profile fetch error:", error);
         setNotif({
-          message: "Failed to load profile data",
+          message: error.message || "Failed to load profile data",
           type: "error"
         });
       } finally {

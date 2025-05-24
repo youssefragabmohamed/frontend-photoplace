@@ -304,22 +304,33 @@ const App = () => {
         formData.append("description", newPhoto.description);
       }
 
+      console.log('Uploading photo with data:', {
+        title: newPhoto.title,
+        location: newPhoto.location,
+        description: newPhoto.description
+      });
+
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/upload`, {
         method: "POST",
         body: formData,
         credentials: 'include',
         headers: {
           'Authorization': `Bearer ${token}`
+          // Don't set Content-Type - let the browser set it with boundary
         }
       });
 
+      console.log('Upload response status:', response.status);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Upload failed');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Upload failed with status ' + response.status);
       }
 
       const data = await response.json();
-      // Refresh both photos and filteredPhotos
+      console.log('Upload successful:', data);
+      
+      // Refresh photos after successful upload
       await fetchPhotos();
       setNotification({ 
         message: "Photo uploaded successfully!", 
@@ -328,6 +339,7 @@ const App = () => {
       navigate(`/photos/${data.photo._id}`);
       return { success: true, data };
     } catch (error) {
+      console.error('Full upload error:', error);
       setNotification({ 
         message: error.message || "Upload failed", 
         type: "error" 
@@ -384,7 +396,10 @@ const App = () => {
       }
       
       const data = await response.json();
-      await fetchSavedPhotos();
+      
+      // Update both saved photos and main photos list
+      await Promise.all([fetchSavedPhotos(), fetchPhotos()]);
+      
       setNotification({ 
         message: data.message, 
         type: "success" 
