@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCamera, faUserEdit, faLink } from '@fortawesome/free-solid-svg-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Photobox from "./Photobox";
-import './ProfilePage.css'; // New CSS file
+import '../App.css'; // New CSS file
 
 const ProfilePage = ({ user }) => {
   const { userId } = useParams();
