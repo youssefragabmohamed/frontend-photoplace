@@ -89,7 +89,7 @@ const PhotoBox = ({ photos = [], loading, onDeletePhoto, selectedTab, onSavePhot
                 loading="lazy"
                 onError={(e) => {
                   e.target.onerror = null;
-                  e.target.src = 'https://via.placeholder.com/800x600?text=Image+Not+Available';
+                  e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2VlZWVlZSIvPjx0ZXh0IHg9IjQwMCIgeT0iMzAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5OTk5OTkiPkltYWdlIE5vdCBBdmFpbGFibGU8L3RleHQ+PC9zdmc+';
                 }}
               />
               <div className="photo-overlay">

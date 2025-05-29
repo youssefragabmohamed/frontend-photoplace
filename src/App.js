@@ -334,26 +334,32 @@ const App = () => {
 
       console.log('Upload response status:', response.status);
 
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        console.error('Failed to parse response:', e);
+        errorData = { message: 'Failed to parse server response' };
+      }
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Upload failed with status ' + response.status);
+        throw new Error(errorData.message || errorData.error || 'Upload failed with status ' + response.status);
       }
 
-      const data = await response.json();
-      console.log('Upload successful:', data);
+      if (!errorData.photo || !errorData.photo._id) {
+        throw new Error('Invalid response from server: Missing photo data');
+      }
+
+      console.log('Upload successful:', errorData);
       
-      if (!data.photo || !data.photo._id) {
-        throw new Error('Invalid response from server');
-      }
-
       // Refresh photos after successful upload
       await fetchPhotos();
       setNotification({ 
         message: "Photo uploaded successfully!", 
         type: "success" 
       });
-      navigate(`/photos/${data.photo._id}`);
-      return { success: true, data };
+      navigate(`/photos/${errorData.photo._id}`);
+      return { success: true, data: errorData };
     } catch (error) {
       console.error('Full upload error:', error);
       setNotification({ 
