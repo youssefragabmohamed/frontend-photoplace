@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faHeart, faComment, faBookmark as faBookmarkSolid } from '@fortawesome/free-solid-svg-icons';
-import { faBookmark as faBookmarkRegular } from '@fortawesome/free-regular-svg-icons';
-import Notification from "./Notification";
+import { faHeart, faBookmark, faShare, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { motion, AnimatePresence } from 'framer-motion';
+import '../App.css';
 
 // Loading animation as data URL
 const LOADING_ANIMATION = `data:image/svg+xml;base64,${btoa(`
@@ -39,6 +39,7 @@ const PhotoDetail = () => {
 
   useEffect(() => {
     const fetchPhoto = async () => {
+      setLoading(true);
       try {
         const token = localStorage.getItem('authToken');
         const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/${id}`, {
@@ -69,6 +70,10 @@ const PhotoDetail = () => {
         }
       } catch (err) {
         setError(err.message);
+        setNotif({
+          message: err.message,
+          type: 'error'
+        });
       } finally {
         setLoading(false);
       }
@@ -76,197 +81,130 @@ const PhotoDetail = () => {
     fetchPhoto();
   }, [id]);
 
-  const handleSavePhoto = async () => {
-    try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/save/${id}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include'
-      });
-
-      if (!response.ok) throw new Error('Failed to save photo');
-      
-      const data = await response.json();
-      setIsSaved(data.isSaved);
-      setNotif({
-        message: data.isSaved ? "Photo saved!" : "Photo removed from saved",
-        type: "success"
-      });
-    } catch (err) {
-      setNotif({
-        message: err.message || "Failed to save photo",
-        type: "error"
-      });
-    }
-  };
-
   if (loading) {
     return (
-      <div className="loading-container" style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '60vh',
-        background: '#f8f8f8',
-        borderRadius: '12px',
-        margin: '20px'
-      }}>
-        <img src={LOADING_ANIMATION} alt="Loading..." style={{
-          width: '44px',
-          height: '44px'
-        }} />
+      <div className="photo-detail-container loading-state">
+        <img src={LOADING_ANIMATION} alt="Loading..." className="loading-spinner" />
       </div>
     );
   }
-  
-  if (error) return <div className="error">{error}</div>;
-  if (!photo) return <div className="not-found">Photo not found</div>;
+
+  if (error || !photo) {
+    return (
+      <div className="photo-detail-container error-state">
+        <div className="error-message">
+          {error || "Failed to load photo"}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="photo-detail-container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
-      {notif && <Notification message={notif.message} type={notif.type} onClose={() => setNotif(null)} />}
-      
-      <button 
-        onClick={() => navigate(-1)} 
-        className="back-btn"
-        style={{
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          fontSize: '1.2rem',
-          marginBottom: '20px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px'
-        }}
-      >
-        <FontAwesomeIcon icon={faArrowLeft} />
-        Back
-      </button>
-      
-      <div className="photo-detail-content" style={{
-        display: 'grid',
-        gridTemplateColumns: 'minmax(300px, 1fr)',
-        gap: '40px'
-      }}>
-        <div className="photo-image-container" style={{
-          borderRadius: '12px',
-          overflow: 'hidden',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-          position: 'relative',
-          backgroundColor: '#f8f8f8'
-        }}>
+    <motion.div 
+      className="photo-detail-container"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      {notif && (
+        <motion.div 
+          className={`notification ${notif.type}`}
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -50, opacity: 0 }}
+          onAnimationComplete={() => {
+            setTimeout(() => setNotif(null), 3000);
+          }}
+        >
+          {notif.message}
+        </motion.div>
+      )}
+
+      <div className="photo-detail-content">
+        <div className="photo-container">
           {imageLoading && (
-            <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              zIndex: 1
-            }}>
-              <img src={LOADING_ANIMATION} alt="Loading..." style={{
-                width: '44px',
-                height: '44px'
-              }} />
+            <div className="loading-overlay">
+              <img src={LOADING_ANIMATION} alt="Loading..." className="loading-spinner" />
             </div>
           )}
-          <img 
+          <img
             src={getImageUrl(photo.url)}
-            alt={photo.title} 
+            alt={photo.title}
+            className="photo-image"
             style={{
-              width: '100%',
-              height: 'auto',
-              display: 'block',
-              opacity: imageLoading ? '0.5' : '1',
+              opacity: imageLoading ? 0.5 : 1,
               transition: 'opacity 0.3s ease'
             }}
             onLoad={() => setImageLoading(false)}
             onError={(e) => {
               setImageLoading(false);
-              e.target.onerror = null;
               e.target.src = LOADING_ANIMATION;
             }}
           />
         </div>
-        
-        <div className="photo-meta" style={{
-          padding: '20px',
-          background: 'var(--glass-bg)',
-          borderRadius: '12px',
-          backdropFilter: 'blur(10px)'
-        }}>
-          <h2 style={{ marginTop: 0 }}>{photo.title}</h2>
-          <p className="description" style={{ color: 'var(--text-secondary)' }}>
-            {photo.description || "No description provided"}
-          </p>
+
+        <div className="photo-info">
+          <h2>{photo.title}</h2>
+          <p className="description">{photo.description}</p>
           
-          <div className="photo-actions" style={{
-            display: 'flex',
-            gap: '16px',
-            margin: '20px 0'
-          }}>
-            <button className="btn btn-outline">
-              <FontAwesomeIcon icon={faHeart} /> Like
-            </button>
-            <button className="btn btn-outline">
-              <FontAwesomeIcon icon={faComment} /> Comment
-            </button>
-            <button 
-              className="btn btn-outline" 
-              onClick={handleSavePhoto}
-              style={{
-                color: isSaved ? 'var(--primary)' : 'inherit'
-              }}
+          <div className="photo-actions">
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="action-button"
             >
-              <FontAwesomeIcon icon={isSaved ? faBookmarkSolid : faBookmarkRegular} /> 
-              {isSaved ? 'Saved' : 'Save'}
-            </button>
+              <FontAwesomeIcon icon={faHeart} className={photo.isLiked ? 'liked' : ''} />
+              <span>{photo.likes?.length || 0}</span>
+            </motion.button>
+            
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="action-button"
+            >
+              <FontAwesomeIcon icon={faBookmark} className={isSaved ? 'saved' : ''} />
+            </motion.button>
+            
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="action-button"
+            >
+              <FontAwesomeIcon icon={faShare} />
+            </motion.button>
+            
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="action-button"
+            >
+              <FontAwesomeIcon icon={faDownload} />
+            </motion.button>
           </div>
-          
-          <div className="uploader-info" style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            marginTop: '30px'
-          }}>
-            <div style={{
-              width: '50px',
-              height: '50px',
-              borderRadius: '50%',
-              overflow: 'hidden',
-              backgroundColor: '#f8f8f8',
-              position: 'relative'
-            }}>
+
+          <div className="uploader-info">
+            <div className="avatar-container">
               <img 
                 src={getImageUrl(photo.userId?.profilePic)}
                 alt={photo.userId?.username || 'User'} 
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
-                }}
+                className="avatar"
                 onError={(e) => {
-                  e.target.onerror = null;
                   e.target.src = LOADING_ANIMATION;
                 }}
               />
             </div>
-            <div>
-              <p style={{ margin: 0, fontWeight: '600' }}>
+            <div className="user-info">
+              <p className="username" onClick={() => navigate(`/profile/${photo.userId?._id}`)}>
                 {photo.userId?.username || 'Unknown'}
               </p>
-              <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+              <p className="upload-date">
                 {new Date(photo.createdAt).toLocaleDateString()}
               </p>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
