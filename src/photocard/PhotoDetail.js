@@ -5,14 +5,37 @@ import { faArrowLeft, faHeart, faComment, faBookmark as faBookmarkSolid } from '
 import { faBookmark as faBookmarkRegular } from '@fortawesome/free-regular-svg-icons';
 import Notification from "./Notification";
 
+// Loading animation as data URL
+const LOADING_ANIMATION = `data:image/svg+xml;base64,${btoa(`
+<svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg" stroke="#888">
+    <g fill="none" fill-rule="evenodd" stroke-width="2">
+        <circle cx="22" cy="22" r="1">
+            <animate attributeName="r" begin="0s" dur="1.8s" values="1; 20" calcMode="spline" keyTimes="0; 1" keySplines="0.165, 0.84, 0.44, 1" repeatCount="indefinite"/>
+            <animate attributeName="stroke-opacity" begin="0s" dur="1.8s" values="1; 0" calcMode="spline" keyTimes="0; 1" keySplines="0.3, 0.61, 0.355, 1" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="22" cy="22" r="1">
+            <animate attributeName="r" begin="-0.9s" dur="1.8s" values="1; 20" calcMode="spline" keyTimes="0; 1" keySplines="0.165, 0.84, 0.44, 1" repeatCount="indefinite"/>
+            <animate attributeName="stroke-opacity" begin="-0.9s" dur="1.8s" values="1; 0" calcMode="spline" keyTimes="0; 1" keySplines="0.3, 0.61, 0.355, 1" repeatCount="indefinite"/>
+        </circle>
+    </g>
+</svg>`)}`;
+
 const PhotoDetail = () => {
   const [photo, setPhoto] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [imageLoading, setImageLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSaved, setIsSaved] = useState(false);
   const [notif, setNotif] = useState(null);
   const { id } = useParams();
   const navigate = useNavigate();
+
+  // Helper function to get full image URL
+  const getImageUrl = (url) => {
+    if (!url) return LOADING_ANIMATION;
+    if (url.startsWith('http')) return url;
+    return `${process.env.REACT_APP_API_URL}${url}`;
+  };
 
   useEffect(() => {
     const fetchPhoto = async () => {
@@ -81,7 +104,25 @@ const PhotoDetail = () => {
     }
   };
 
-  if (loading) return <div className="loading">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="loading-container" style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '60vh',
+        background: '#f8f8f8',
+        borderRadius: '12px',
+        margin: '20px'
+      }}>
+        <img src={LOADING_ANIMATION} alt="Loading..." style={{
+          width: '44px',
+          height: '44px'
+        }} />
+      </div>
+    );
+  }
+  
   if (error) return <div className="error">{error}</div>;
   if (!photo) return <div className="not-found">Photo not found</div>;
 
@@ -115,19 +156,39 @@ const PhotoDetail = () => {
         <div className="photo-image-container" style={{
           borderRadius: '12px',
           overflow: 'hidden',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+          position: 'relative',
+          backgroundColor: '#f8f8f8'
         }}>
+          {imageLoading && (
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 1
+            }}>
+              <img src={LOADING_ANIMATION} alt="Loading..." style={{
+                width: '44px',
+                height: '44px'
+              }} />
+            </div>
+          )}
           <img 
-            src={photo.url} 
+            src={getImageUrl(photo.url)}
             alt={photo.title} 
             style={{
               width: '100%',
               height: 'auto',
-              display: 'block'
+              display: 'block',
+              opacity: imageLoading ? '0.5' : '1',
+              transition: 'opacity 0.3s ease'
             }}
+            onLoad={() => setImageLoading(false)}
             onError={(e) => {
+              setImageLoading(false);
               e.target.onerror = null;
-              e.target.src = 'https://via.placeholder.com/800x600?text=Image+Not+Available';
+              e.target.src = LOADING_ANIMATION;
             }}
           />
         </div>
@@ -172,16 +233,28 @@ const PhotoDetail = () => {
             gap: '12px',
             marginTop: '30px'
           }}>
-            <img 
-              src={photo.userId?.profilePic || '/default-profile.jpg'} 
-              alt={photo.userId?.username || 'User'} 
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '50%',
-                objectFit: 'cover'
-              }}
-            />
+            <div style={{
+              width: '50px',
+              height: '50px',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              backgroundColor: '#f8f8f8',
+              position: 'relative'
+            }}>
+              <img 
+                src={getImageUrl(photo.userId?.profilePic)}
+                alt={photo.userId?.username || 'User'} 
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = LOADING_ANIMATION;
+                }}
+              />
+            </div>
             <div>
               <p style={{ margin: 0, fontWeight: '600' }}>
                 {photo.userId?.username || 'Unknown'}
