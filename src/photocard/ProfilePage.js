@@ -44,21 +44,18 @@ const ProfilePage = ({ user }) => {
           credentials: 'include'
         });
 
-        if (!userRes.ok) throw new Error('Failed to fetch profile');
+        if (!userRes.ok) {
+          const error = await userRes.json();
+          throw new Error(error.message || 'Failed to fetch profile');
+        }
+
         const userData = await userRes.json();
+        if (!userData.user) {
+          throw new Error('Invalid profile data received');
+        }
+
         setProfileUser(userData.user);
-
-        // Fetch user's posts
-        const photosRes = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/user/${userId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        });
-
-        const userPhotos = await photosRes.json();
-        setPhotos(userPhotos || []);
+        setPhotos(userData.photos || []);
 
         // Fetch saved photos if it's the current user
         if (user && user._id === userId) {
@@ -70,8 +67,17 @@ const ProfilePage = ({ user }) => {
             credentials: 'include'
           });
 
-          const savedData = await savedRes.json();
-          setSavedPhotos(savedData || []);
+          if (!savedRes.ok) {
+            if (savedRes.status === 404) {
+              setSavedPhotos([]);
+            } else {
+              const error = await savedRes.json();
+              throw new Error(error.message || 'Failed to fetch saved photos');
+            }
+          } else {
+            const savedData = await savedRes.json();
+            setSavedPhotos(Array.isArray(savedData) ? savedData : []);
+          }
         }
       } catch (error) {
         console.error("Profile fetch error:", error);
@@ -84,8 +90,28 @@ const ProfilePage = ({ user }) => {
       }
     };
 
-    fetchProfileData();
+    if (userId) {
+      fetchProfileData();
+    }
   }, [userId, user]);
+
+  if (loading) {
+    return (
+      <div className="profile-container">
+        <div className="loading-spinner">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!profileUser || !profileUser._id) {
+    return (
+      <div className="profile-container">
+        <div className="error-message">
+          {notif?.message || "Failed to load profile"}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div 
@@ -96,7 +122,7 @@ const ProfilePage = ({ user }) => {
     >
       {notif && (
         <motion.div 
-          className="notification"
+          className={`notification ${notif.type}`}
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -50, opacity: 0 }}
@@ -116,20 +142,22 @@ const ProfilePage = ({ user }) => {
               src={profileUser.profilePic || '/default-profile.jpg'}
               alt={profileUser.username}
               className="avatar"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = '/default-profile.jpg';
+              }}
             />
-            {/* Profile pic upload button */}
           </motion.div>
 
           <div className="profile-info">
             <motion.div variants={slideUp}>
               <h2>{profileUser.username}</h2>
-              {/* Edit profile buttons */}
             </motion.div>
 
             <motion.div className="stats" variants={slideUp}>
               <div><strong>{photos.length}</strong> posts</div>
-              <div><strong>{profileUser.followers}</strong> followers</div>
-              <div><strong>{profileUser.following}</strong> following</div>
+              <div><strong>{profileUser.followers?.length || 0}</strong> followers</div>
+              <div><strong>{profileUser.following?.length || 0}</strong> following</div>
             </motion.div>
 
             <motion.div className="bio" variants={slideUp}>
@@ -138,13 +166,19 @@ const ProfilePage = ({ user }) => {
                   <textarea 
                     value={newDescription} 
                     onChange={(e) => setNewDescription(e.target.value)}
+                    maxLength={500}
                   />
                 </>
               ) : (
                 <>
                   <p>{profileUser.bio || "No bio yet"}</p>
                   {profileUser.link && (
-                    <a href={profileUser.link} target="_blank" rel="noopener">
+                    <a 
+                      href={profileUser.link} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="profile-link"
+                    >
                       <FontAwesomeIcon icon={faLink} /> {profileUser.link}
                     </a>
                   )}

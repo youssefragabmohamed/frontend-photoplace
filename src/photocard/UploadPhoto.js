@@ -74,17 +74,21 @@ const UploadPhoto = ({ onUpload, onClose, refreshPhotos }) => {
       setIsUploading(true);
       const result = await onUpload({
         file,
-        title,
-        description,
+        title: title.trim(),
+        description: description.trim(),
         location: selectedTab
       });
 
-      if (result?.success) {
+      if (result?.success && result?.data?.photo) {
         resetForm();
-        if (refreshPhotos) refreshPhotos(); // Trigger photo refresh
-        if (onClose) onClose(); // Close the upload modal if applicable
+        if (refreshPhotos) {
+          await refreshPhotos(); // Trigger photo refresh
+        }
+        if (onClose) {
+          onClose(); // Close the upload modal if applicable
+        }
       } else {
-        setError("Upload failed, please try again.");
+        throw new Error(result?.error || "Upload failed, please try again.");
       }
     } catch (error) {
       console.error("Upload error:", error);

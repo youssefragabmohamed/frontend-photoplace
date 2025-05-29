@@ -98,7 +98,7 @@ const App = () => {
     }
   };
 
-  // Updated fetchPhotos function
+  // Updated fetchPhotos function with better error handling
   const fetchPhotos = async (category = null) => {
     try {
       const token = getAuthToken();
@@ -125,8 +125,13 @@ const App = () => {
       }
 
       const data = await response.json();
+      if (!Array.isArray(data)) {
+        console.error('Invalid photos data:', data);
+        throw new Error('Invalid response format from server');
+      }
+
       setPhotos(data);
-      setFilteredPhotos(data); // Update filtered photos as well
+      setFilteredPhotos(data);
     } catch (error) {
       console.error('Fetch photos error:', error);
       setNotification({
@@ -324,7 +329,6 @@ const App = () => {
         credentials: 'include',
         headers: {
           'Authorization': `Bearer ${token}`
-          // Don't set Content-Type - let the browser set it with boundary
         }
       });
 
@@ -338,6 +342,10 @@ const App = () => {
       const data = await response.json();
       console.log('Upload successful:', data);
       
+      if (!data.photo || !data.photo._id) {
+        throw new Error('Invalid response from server');
+      }
+
       // Refresh photos after successful upload
       await fetchPhotos();
       setNotification({ 
