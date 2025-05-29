@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHeart, faBookmark, faShare, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faHeart, faBookmark, faShare, faDownload, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import '../App.css';
 
@@ -20,15 +20,17 @@ const LOADING_ANIMATION = `data:image/svg+xml;base64,${btoa(`
     </g>
 </svg>`)}`;
 
-const PhotoDetail = () => {
+const PhotoDetail = ({ user }) => {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const [photo, setPhoto] = useState(null);
   const [loading, setLoading] = useState(true);
   const [imageLoading, setImageLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSaved, setIsSaved] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [notif, setNotif] = useState(null);
-  const { id } = useParams();
-  const navigate = useNavigate();
 
   // Helper function to get full image URL
   const getImageUrl = (url) => {
@@ -38,48 +40,113 @@ const PhotoDetail = () => {
   };
 
   useEffect(() => {
-    const fetchPhoto = async () => {
-      setLoading(true);
-      try {
-        const token = localStorage.getItem('authToken');
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/${id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        });
-        
-        if (!response.ok) throw new Error("Photo not found");
-        
-        const data = await response.json();
-        setPhoto(data);
-        
-        // Check if photo is saved
-        const userResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/profile/me`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        });
-        
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          setIsSaved(userData.user.savedPhotos.includes(data._id));
-        }
-      } catch (err) {
-        setError(err.message);
-        setNotif({
-          message: err.message,
-          type: 'error'
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPhoto();
+    fetchPhotoDetails();
   }, [id]);
+
+  const fetchPhotoDetails = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch photo details');
+
+      const data = await response.json();
+      setPhoto(data);
+      setIsSaved(data.isSaved);
+      setIsLiked(data.isLiked);
+    } catch (err) {
+      setError(err.message);
+      setNotif({
+        message: err.message,
+        type: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/save/${id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to save photo');
+
+      const data = await response.json();
+      setIsSaved(data.isSaved);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleLike = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/like/${id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to like photo');
+
+      const data = await response.json();
+      setIsLiked(data.isLiked);
+      setPhoto(prev => ({
+        ...prev,
+        likes: data.isLiked ? prev.likes + 1 : prev.likes - 1,
+      }));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this photo?')) return;
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to delete photo');
+
+      navigate('/');
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    // You could add a notification here to show the URL was copied
+  };
+
+  const handleDownload = () => {
+    if (!photo?.url) return;
+    const link = document.createElement('a');
+    link.href = photo.url;
+    link.download = `photo-${id}.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   if (loading) {
     return (
@@ -98,6 +165,8 @@ const PhotoDetail = () => {
       </div>
     );
   }
+
+  const isOwner = user?._id === photo.userId;
 
   return (
     <motion.div 
@@ -144,44 +213,61 @@ const PhotoDetail = () => {
         </div>
 
         <div className="photo-info">
-          <h2>{photo.title}</h2>
-          <p className="description">{photo.description}</p>
-          
-          <div className="photo-actions">
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="action-button"
-            >
-              <FontAwesomeIcon icon={faHeart} className={photo.isLiked ? 'liked' : ''} />
-              <span>{photo.likes?.length || 0}</span>
-            </motion.button>
-            
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="action-button"
-            >
-              <FontAwesomeIcon icon={faBookmark} className={isSaved ? 'saved' : ''} />
-            </motion.button>
-            
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="action-button"
-            >
-              <FontAwesomeIcon icon={faShare} />
-            </motion.button>
-            
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="action-button"
-            >
-              <FontAwesomeIcon icon={faDownload} />
-            </motion.button>
+          <div className="photo-header">
+            <h2>{photo.title}</h2>
+            <div className="photo-actions">
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={handleLike}
+                className={`action-button ${isLiked ? 'active' : ''}`}
+              >
+                <FontAwesomeIcon icon={faHeart} />
+                <span>{photo.likes || 0}</span>
+              </motion.button>
+
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={handleSave}
+                className={`action-button ${isSaved ? 'active' : ''}`}
+                disabled={saving}
+              >
+                <FontAwesomeIcon icon={faBookmark} />
+                <span>{isSaved ? 'Saved' : 'Save'}</span>
+              </motion.button>
+
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={handleShare}
+                className="action-button"
+              >
+                <FontAwesomeIcon icon={faShare} />
+                <span>Share</span>
+              </motion.button>
+
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={handleDownload}
+                className="action-button"
+              >
+                <FontAwesomeIcon icon={faDownload} />
+                <span>Download</span>
+              </motion.button>
+
+              {isOwner && (
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleDelete}
+                  className="action-button delete"
+                >
+                  <FontAwesomeIcon icon={faTrash} />
+                  <span>Delete</span>
+                </motion.button>
+              )}
+            </div>
           </div>
 
+          <p className="description">{photo.description}</p>
+          
           <div className="uploader-info">
             <div className="avatar-container">
               <img 
