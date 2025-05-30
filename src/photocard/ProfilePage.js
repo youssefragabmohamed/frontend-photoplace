@@ -329,7 +329,7 @@ const ProfilePage = ({ user: currentUser }) => {
           {isOwnProfile && isHovering && !uploadLoading && (
             <div className="avatar-overlay">
               <FontAwesomeIcon icon={faCamera} size="lg" />
-              <span className="upload-text">Add Photo</span>
+              <span className="upload-text">{profileUser.profilePic ? 'Change Photo' : 'Add Photo'}</span>
             </div>
           )}
           

@@ -95,8 +95,17 @@ const PhotoDetail = ({ user }) => {
 
       const data = await response.json();
       setIsSaved(data.isSaved);
+      setNotif({
+        message: data.isSaved ? "Photo saved successfully!" : "Photo removed from saved",
+        type: 'success'
+      });
+      setTimeout(() => setNotif(null), 3000);
     } catch (err) {
       setError(err.message);
+      setNotif({
+        message: err.message,
+        type: 'error'
+      });
     } finally {
       setSaving(false);
     }
@@ -193,16 +202,34 @@ const PhotoDetail = ({ user }) => {
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -50, opacity: 0 }}
-          onAnimationComplete={() => {
-            setTimeout(() => setNotif(null), 3000);
-          }}
         >
           {notif.message}
         </motion.div>
       )}
 
       <div className="photo-detail-content">
-        <div className="photo-container">
+        <div className="photo-header-info">
+          <div className="uploader-info" onClick={() => navigate(`/profile/${photo.userId._id}`)} style={{ cursor: 'pointer' }}>
+            <div className="avatar-container">
+              <img 
+                src={getImageUrl(photo.userId?.profilePic)}
+                alt={photo.userId?.username || 'User'} 
+                className="avatar"
+                onError={(e) => {
+                  e.target.src = LOADING_ANIMATION;
+                }}
+              />
+            </div>
+            <div className="user-info">
+              <p className="username">{photo.userId?.username || 'Unknown'}</p>
+              <p className="upload-date">
+                {new Date(photo.createdAt).toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="photo-main-container">
           {imageLoading && (
             <div className="loading-overlay">
               <img src={LOADING_ANIMATION} alt="Loading..." className="loading-spinner" />
@@ -224,8 +251,8 @@ const PhotoDetail = ({ user }) => {
           />
         </div>
 
-        <div className="photo-info">
-          <div className="photo-header">
+        <div className="photo-details-section">
+          <div className="photo-title-section">
             <h2>{photo.title}</h2>
             <div className="photo-actions">
               <motion.button
@@ -233,7 +260,7 @@ const PhotoDetail = ({ user }) => {
                 onClick={handleLike}
                 className={`action-button ${isLiked ? 'active' : ''}`}
               >
-                <FontAwesomeIcon icon={faHeart} />
+                <FontAwesomeIcon icon={isLiked ? faHeart : farHeart} />
                 <span>{photo.likes || 0}</span>
               </motion.button>
 
@@ -278,28 +305,11 @@ const PhotoDetail = ({ user }) => {
             </div>
           </div>
 
-          <p className="description">{photo.description}</p>
-          
-          <div className="uploader-info">
-            <div className="avatar-container">
-              <img 
-                src={getImageUrl(photo.userId?.profilePic)}
-                alt={photo.userId?.username || 'User'} 
-                className="avatar"
-                onError={(e) => {
-                  e.target.src = LOADING_ANIMATION;
-                }}
-              />
+          {photo.description && (
+            <div className="photo-description">
+              <p>{photo.description}</p>
             </div>
-            <div className="user-info">
-              <p className="username" onClick={() => navigate(`/profile/${photo.userId?._id}`)}>
-                {photo.userId?.username || 'Unknown'}
-              </p>
-              <p className="upload-date">
-                {new Date(photo.createdAt).toLocaleDateString()}
-              </p>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </motion.div>
