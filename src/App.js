@@ -67,12 +67,16 @@ const App = () => {
   };
 
   const handleSignUp = async (userData) => {
+    if (!userData.token) {
+      throw new Error('No token received from server');
+    }
     localStorage.setItem('authToken', userData.token);
     setUser(userData.user);
     setNotification({
       message: 'Account created successfully!',
       type: 'success'
     });
+    return { success: true };
   };
 
   const handleLogout = () => {

@@ -47,19 +47,30 @@ const SignUpPage = ({ onSignUp }) => {
     }
 
     try {
-      const result = await onSignUp({
-        username: form.username.trim(),
-        email: form.email.trim(),
-        password: form.password
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: form.username.trim(),
+          email: form.email.trim(),
+          password: form.password
+        })
       });
 
-      if (result && result.success) {
+      const data = await response.json();
+
+      if (data.success) {
+        await onSignUp(data);
         setStatus({
           loading: false,
           error: null,
           success: true
         });
         navigate("/", { replace: true });
+      } else {
+        throw new Error(data.message || 'Registration failed');
       }
     } catch (error) {
       console.error("Signup error:", error);
