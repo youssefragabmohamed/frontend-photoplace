@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCamera, faUserEdit, faLink } from '@fortawesome/free-solid-svg-icons';
+import { faCamera, faUserEdit, faLink, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Photobox from "./Photobox";
-import ReactCrop from 'react-image-crop';
+import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import '../App.css'; // New CSS file
 
@@ -30,18 +30,16 @@ const ProfilePage = ({ user: currentUser }) => {
   const [photos, setPhotos] = useState([]);
   const [savedPhotos, setSavedPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [imageLoading, setImageLoading] = useState(true);
-  const [uploadLoading, setUploadLoading] = useState(false);
-  const [notif, setNotif] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [newDescription, setNewDescription] = useState("");
-  const [activeTab, setActiveTab] = useState("photos");
-  const [showPortfolio, setShowPortfolio] = useState(false);
+  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('photos');
   const [isHovering, setIsHovering] = useState(false);
   const [showCropModal, setShowCropModal] = useState(false);
-  const [crop, setCrop] = useState({ unit: '%', width: 100, aspect: 1 });
+  const [crop, setCrop] = useState({ unit: '%', width: 90, height: 90, x: 5, y: 5 });
+  const [zoom, setZoom] = useState(1);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [uploadLoading, setUploadLoading] = useState(false);
   const fileInputRef = useRef(null);
   const imgRef = useRef(null);
 
@@ -64,123 +62,88 @@ const ProfilePage = ({ user: currentUser }) => {
   };
 
   useEffect(() => {
-    const fetchProfileData = async () => {
-      setLoading(true);
-      try {
-        const token = localStorage.getItem('authToken');
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/profile/${userId}`, {
+    fetchUserData();
+  }, [userId]);
+
+  const fetchUserData = async () => {
+    try {
+      // Fetch user profile
+      const profileResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/profile/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+      });
+      if (!profileResponse.ok) throw new Error('Failed to fetch profile');
+      const profileData = await profileResponse.json();
+      setProfileUser(profileData.user);
+
+      // Fetch user's photos
+      const photosResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/user/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+      });
+      if (!photosResponse.ok) throw new Error('Failed to fetch photos');
+      const photosData = await photosResponse.json();
+      setPhotos(photosData);
+
+      // If viewing own profile, fetch saved photos
+      if (currentUser?._id === userId) {
+        const savedResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/saved`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
           },
-          credentials: 'include'
         });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch profile data');
+        if (savedResponse.ok) {
+          const savedData = await savedResponse.json();
+          setSavedPhotos(savedData);
         }
-
-        const data = await response.json();
-        setProfileUser(data.user);
-        setPhotos(data.photos || []);
-
-        // Fetch saved photos if viewing own profile
-        if (currentUser && currentUser._id === userId) {
-          const savedResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/profile/me`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            credentials: 'include'
-          });
-
-          if (savedResponse.ok) {
-            const savedData = await savedResponse.json();
-            setSavedPhotos(savedData.user.savedPhotos || []);
-          }
-        }
-      } catch (error) {
-        console.error('Profile fetch error:', error);
-        setNotif({
-          message: error.message || 'Failed to load profile',
-          type: 'error'
-        });
-      } finally {
-        setLoading(false);
       }
-    };
-
-    if (userId) {
-      fetchProfileData();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-  }, [userId, currentUser]);
+  };
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        setNotif({
-          message: 'File size must be less than 5MB',
-          type: 'error'
-        });
-        return;
-      }
-      if (!file.type.match('image.*')) {
-        setNotif({
-          message: 'Please select an image file',
-          type: 'error'
-        });
-        return;
-      }
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onload = () => {
-        setPreviewUrl(reader.result);
-        setShowCropModal(true);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('File size must be less than 5MB');
+      return;
     }
+
+    if (!file.type.match('image.*')) {
+      setError('Please select an image file');
+      return;
+    }
+
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPreviewUrl(reader.result);
+      setShowCropModal(true);
+    };
+    reader.readAsDataURL(file);
   };
 
   const onImageLoad = (e) => {
     imgRef.current = e.target;
     const { width, height } = e.target;
-    const crop = centerCrop(
-      makeAspectCrop(
-        {
-          unit: '%',
-          width: 90,
-        },
-        1,
-        width,
-        height
-      ),
-      width,
-      height
-    );
-    setCrop(crop);
-  };
+    const cropWidth = Math.min(width, height);
+    const x = (width - cropWidth) / 2;
+    const y = (height - cropWidth) / 2;
 
-  const centerCrop = (crop, imageWidth, imageHeight) => {
-    const centerX = imageWidth / 2;
-    const centerY = imageHeight / 2;
-    return {
-      ...crop,
-      x: centerX - (crop.width / 2),
-      y: centerY - (crop.height / 2),
-    };
-  };
-
-  const makeAspectCrop = (crop, aspect, width, height) => {
-    const cropWidth = crop.width;
-    const cropHeight = cropWidth / aspect;
-    return {
-      unit: crop.unit,
+    setCrop({
+      unit: 'px',
       width: cropWidth,
-      height: cropHeight,
-      x: 0,
-      y: (height - cropHeight) / 2,
-    };
+      height: cropWidth,
+      x,
+      y,
+      aspect: 1
+    });
   };
 
   const getCroppedImg = async (image, crop) => {
@@ -238,11 +201,7 @@ const ProfilePage = ({ user: currentUser }) => {
       setSelectedFile(null);
       setPreviewUrl(null);
     } catch (err) {
-      console.error('Profile pic update error:', err);
-      setNotif({
-        message: err.message || 'Failed to update profile picture',
-        type: 'error'
-      });
+      setError(err.message);
     }
   };
 
@@ -258,17 +217,27 @@ const ProfilePage = ({ user: currentUser }) => {
     );
   }
 
-  if (!profileUser) {
+  if (error) {
     return (
       <div className="profile-container error-state">
         <div className="error-message">
-          {notif?.message || "Failed to load profile"}
+          {error}
         </div>
       </div>
     );
   }
 
-  const isOwnProfile = currentUser && currentUser._id === userId;
+  if (!profileUser) {
+    return (
+      <div className="profile-container error-state">
+        <div className="error-message">
+          User not found
+        </div>
+      </div>
+    );
+  }
+
+  const isOwnProfile = currentUser?._id === userId;
 
   return (
     <motion.div 
@@ -277,17 +246,17 @@ const ProfilePage = ({ user: currentUser }) => {
       animate="visible"
       variants={fadeIn}
     >
-      {notif && (
+      {error && (
         <motion.div 
-          className={`notification ${notif.type}`}
+          className={`notification error`}
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -50, opacity: 0 }}
           onAnimationComplete={() => {
-            setTimeout(() => setNotif(null), 3000);
+            setTimeout(() => setError(null), 3000);
           }}
         >
-          {notif.message}
+          {error}
         </motion.div>
       )}
 
@@ -325,10 +294,10 @@ const ProfilePage = ({ user: currentUser }) => {
             }}
           />
           
-          {isOwnProfile && isHovering && (
+          {isOwnProfile && isHovering && !uploadLoading && (
             <div className="avatar-overlay">
               <FontAwesomeIcon icon={faCamera} size="lg" />
-              <span>Change Photo</span>
+              <span className="upload-text">Add Photo</span>
             </div>
           )}
           
@@ -384,17 +353,20 @@ const ProfilePage = ({ user: currentUser }) => {
 
       {/* Tabs */}
       <div className="profile-tabs">
-        {['photos', 'saved'].map((tab) => (
-          <motion.button
-            key={tab}
-            className={`tab ${activeTab === tab ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+        <button
+          className={`tab-button ${activeTab === 'photos' ? 'active' : ''}`}
+          onClick={() => setActiveTab('photos')}
+        >
+          Posts
+        </button>
+        {isOwnProfile && (
+          <button
+            className={`tab-button ${activeTab === 'saved' ? 'active' : ''}`}
+            onClick={() => setActiveTab('saved')}
           >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </motion.button>
-        ))}
+            Saved
+          </button>
+        )}
       </div>
 
       {/* Photo Grid */}
@@ -417,25 +389,71 @@ const ProfilePage = ({ user: currentUser }) => {
       {showCropModal && (
         <div className="crop-modal">
           <div className="crop-container">
-            <ReactCrop
-              crop={crop}
-              onChange={c => setCrop(c)}
-              aspect={1}
-              circularCrop
-            >
-              <img
-                src={previewUrl}
-                onLoad={onImageLoad}
-                style={{ maxHeight: '70vh' }}
-              />
-            </ReactCrop>
-            <div className="crop-actions">
-              <button onClick={handleCropComplete}>Save</button>
-              <button onClick={() => {
-                setShowCropModal(false);
-                setSelectedFile(null);
-                setPreviewUrl(null);
-              }}>Cancel</button>
+            <div className="crop-header">
+              <h3>Edit Photo</h3>
+              <button 
+                className="close-button"
+                onClick={() => {
+                  setShowCropModal(false);
+                  setSelectedFile(null);
+                  setPreviewUrl(null);
+                }}
+              >
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+            
+            <div className="crop-preview">
+              <ReactCrop
+                crop={crop}
+                onChange={c => setCrop(c)}
+                aspect={1}
+                circularCrop
+                className="circular-crop"
+              >
+                <img
+                  ref={imgRef}
+                  src={previewUrl}
+                  onLoad={onImageLoad}
+                  style={{ 
+                    maxHeight: '70vh',
+                    transform: `scale(${zoom})`
+                  }}
+                />
+              </ReactCrop>
+            </div>
+
+            <div className="crop-controls">
+              <div className="zoom-control">
+                <label>Zoom</label>
+                <input
+                  type="range"
+                  min="1"
+                  max="3"
+                  step="0.1"
+                  value={zoom}
+                  onChange={(e) => setZoom(parseFloat(e.target.value))}
+                />
+              </div>
+              
+              <div className="crop-actions">
+                <button 
+                  className="cancel-button"
+                  onClick={() => {
+                    setShowCropModal(false);
+                    setSelectedFile(null);
+                    setPreviewUrl(null);
+                  }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="save-button"
+                  onClick={handleCropComplete}
+                >
+                  Save
+                </button>
+              </div>
             </div>
           </div>
         </div>

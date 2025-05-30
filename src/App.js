@@ -12,7 +12,7 @@ import PhotoDetail from "./photocard/PhotoDetail";
 import UploadPhoto from "./photocard/UploadPhoto";
 import ProfilePage from "./photocard/ProfilePage";
 import PrivateRoute from "./photocard/PrivateRoute";
-import GalleryTabs from "./photocard/GalleryTabs";
+import GalleryTabs from "./components/GalleryTabs";
 import './App.css';
 
 const App = () => {
@@ -34,12 +34,10 @@ const App = () => {
           return;
         }
 
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/session`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/me`, {
           headers: {
             'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
           },
-          credentials: 'include'
         });
 
         if (response.ok) {
@@ -50,6 +48,7 @@ const App = () => {
         }
       } catch (error) {
         console.error('Auth check error:', error);
+        localStorage.removeItem('authToken');
       } finally {
         setLoading(false);
       }
@@ -60,18 +59,27 @@ const App = () => {
 
   const handleLogin = async (userData) => {
     setUser(userData);
-    navigate('/');
+    setNotification({
+      message: 'Successfully logged in!',
+      type: 'success'
+    });
   };
 
   const handleSignUp = async (userData) => {
     setUser(userData);
-    navigate('/');
+    setNotification({
+      message: 'Account created successfully!',
+      type: 'success'
+    });
   };
 
   const handleLogout = () => {
     localStorage.removeItem('authToken');
     setUser(null);
-    navigate('/login');
+    setNotification({
+      message: 'Successfully logged out!',
+      type: 'success'
+    });
   };
 
   const getActiveRoute = () => {
@@ -124,17 +132,7 @@ const App = () => {
             path="/"
             element={
               <PrivateRoute user={user}>
-                <>
-                  <SearchBar onSearch={setSearchQuery} />
-                  <GalleryTabs
-                    photos={photos.filter(photo =>
-                      photo?.title?.toLowerCase().includes(searchQuery.toLowerCase())
-                    )}
-                    onDeletePhoto={(id) => {
-                      setPhotos(photos.filter(p => p._id !== id));
-                    }}
-                  />
-                </>
+                <GalleryTabs user={user} />
               </PrivateRoute>
             }
           />
@@ -150,10 +148,7 @@ const App = () => {
             path="/upload" 
             element={
               <PrivateRoute user={user}>
-                <UploadPhoto onUpload={(photo) => {
-                  setPhotos([photo, ...photos]);
-                  navigate('/');
-                }} />
+                <UploadPhoto />
               </PrivateRoute>
             } 
           />

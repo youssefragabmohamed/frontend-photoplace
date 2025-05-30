@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHeart, faBookmark, faShare, faDownload, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faHeart as farHeart, faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import '../App.css';
 
@@ -45,18 +46,28 @@ const PhotoDetail = ({ user }) => {
 
   const fetchPhotoDetails = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/${id}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        },
-      });
+      const [photoResponse, savedResponse] = await Promise.all([
+        fetch(`${process.env.REACT_APP_API_URL}/api/photos/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          },
+        }),
+        fetch(`${process.env.REACT_APP_API_URL}/api/photos/saved`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          },
+        })
+      ]);
 
-      if (!response.ok) throw new Error('Failed to fetch photo details');
+      if (!photoResponse.ok) throw new Error('Failed to fetch photo details');
 
-      const data = await response.json();
-      setPhoto(data);
-      setIsSaved(data.isSaved);
-      setIsLiked(data.isLiked);
+      const [photoData, savedData] = await Promise.all([
+        photoResponse.json(),
+        savedResponse.json()
+      ]);
+
+      setPhoto(photoData);
+      setIsSaved(savedData.some(savedPhoto => savedPhoto._id === id));
     } catch (err) {
       setError(err.message);
       setNotif({
@@ -135,13 +146,14 @@ const PhotoDetail = ({ user }) => {
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
-    // You could add a notification here to show the URL was copied
+    setError('Link copied to clipboard!');
+    setTimeout(() => setError(null), 3000);
   };
 
   const handleDownload = () => {
     if (!photo?.url) return;
     const link = document.createElement('a');
-    link.href = photo.url;
+    link.href = `${process.env.REACT_APP_API_URL}${photo.url}`;
     link.download = `photo-${id}.jpg`;
     document.body.appendChild(link);
     link.click();
@@ -231,7 +243,7 @@ const PhotoDetail = ({ user }) => {
                 className={`action-button ${isSaved ? 'active' : ''}`}
                 disabled={saving}
               >
-                <FontAwesomeIcon icon={faBookmark} />
+                <FontAwesomeIcon icon={isSaved ? faBookmark : farBookmark} />
                 <span>{isSaved ? 'Saved' : 'Save'}</span>
               </motion.button>
 
