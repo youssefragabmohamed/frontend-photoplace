@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faCloudUploadAlt } from '@fortawesome/free-solid-svg-icons';
 import '../App.css';
+import { useNavigate } from 'react-router-dom';
 
 const UploadPhoto = ({ onUpload, onClose, refreshPhotos }) => {
   const [title, setTitle] = useState("");
@@ -14,6 +15,7 @@ const UploadPhoto = ({ onUpload, onClose, refreshPhotos }) => {
   const [selectedTab, setSelectedTab] = useState('digital');
 
   const fileInputRef = useRef(null);
+  const navigate = useNavigate();
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -72,16 +74,17 @@ const UploadPhoto = ({ onUpload, onClose, refreshPhotos }) => {
 
     try {
       setIsUploading(true);
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
       const formData = new FormData();
       formData.append('photo', file);
       formData.append('title', title.trim());
       formData.append('description', description.trim());
       formData.append('location', selectedTab.toLowerCase());
-
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        throw new Error('Not authenticated');
-      }
 
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/upload`, {
         method: 'POST',
@@ -93,6 +96,11 @@ const UploadPhoto = ({ onUpload, onClose, refreshPhotos }) => {
 
       if (!response.ok) {
         const data = await response.json();
+        if (response.status === 401) {
+          localStorage.removeItem('authToken');
+          navigate('/login');
+          return;
+        }
         throw new Error(data.message || 'Upload failed');
       }
 
@@ -101,7 +109,7 @@ const UploadPhoto = ({ onUpload, onClose, refreshPhotos }) => {
         resetForm();
         if (onUpload) onUpload(data.photo);
         if (refreshPhotos) refreshPhotos();
-        window.location.href = '/';
+        navigate('/');
       } else {
         throw new Error(data.message || 'Upload failed');
       }
