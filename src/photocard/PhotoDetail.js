@@ -67,7 +67,7 @@ const PhotoDetail = ({ user }) => {
       ]);
 
       setPhoto(photoData);
-      setIsSaved(savedData.some(savedPhoto => savedPhoto._id === id));
+      setIsSaved(savedData.photos.some(savedPhoto => savedPhoto._id === id));
     } catch (err) {
       setError(err.message);
       setNotif({
