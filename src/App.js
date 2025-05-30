@@ -11,9 +11,11 @@ import Notification from "./photocard/Notification";
 import PhotoDetail from "./photocard/PhotoDetail";
 import UploadPhoto from "./photocard/UploadPhoto";
 import ProfilePage from "./photocard/ProfilePage";
+import SearchPage from "./pages/SearchPage";
 import PrivateRoute from "./photocard/PrivateRoute";
 import GalleryTabs from "./components/GalleryTabs";
 import './App.css';
+import NotificationBell from './components/NotificationBell';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -98,12 +100,8 @@ const App = () => {
   };
 
   const handleNavClick = (path) => {
-    if (path === '/search') {
-      // Toggle search bar visibility
-      setSearchQuery(prev => prev ? '' : ' ');
-    } else {
-      navigate(path);
-    }
+    // Always navigate to the path
+    navigate(path);
   };
 
   return (
@@ -139,6 +137,14 @@ const App = () => {
             element={
               <PrivateRoute user={user}>
                 <GalleryTabs user={user} />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/search"
+            element={
+              <PrivateRoute user={user}>
+                <SearchPage />
               </PrivateRoute>
             }
           />
@@ -207,6 +213,7 @@ const App = () => {
             <FontAwesomeIcon icon={faCog} />
             <span>Settings</span>
           </div>
+          <NotificationBell />
         </nav>
       )}
     </div>
