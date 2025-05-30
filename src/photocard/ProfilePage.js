@@ -182,27 +182,40 @@ const ProfilePage = ({ user: currentUser }) => {
     if (!imgRef.current || !crop.width || !crop.height) return;
 
     try {
+      setUploadLoading(true);
       const croppedBlob = await getCroppedImg(imgRef.current, crop);
       const formData = new FormData();
       formData.append('profilePic', new File([croppedBlob], 'profile.jpg', { type: 'image/jpeg' }));
 
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/update-pic`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: formData,
       });
 
-      if (!response.ok) throw new Error('Failed to update profile picture');
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to update profile picture');
+      }
 
       const data = await response.json();
       setProfileUser(prev => ({ ...prev, profilePic: data.profilePic }));
       setShowCropModal(false);
       setSelectedFile(null);
       setPreviewUrl(null);
+      setError(null);
     } catch (err) {
-      setError(err.message);
+      console.error('Profile pic update error:', err);
+      setError(err.message || 'Failed to update profile picture');
+    } finally {
+      setUploadLoading(false);
     }
   };
 
@@ -355,20 +368,6 @@ const ProfilePage = ({ user: currentUser }) => {
           </motion.div>
         </div>
       </div>
-
-      {/* Portfolio Section */}
-      <AnimatePresence>
-        {showPortfolio && (
-          <motion.div
-            className="portfolio-section"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-          >
-            {/* Portfolio content */}
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Tabs */}
       <div className="profile-tabs">

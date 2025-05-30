@@ -76,18 +76,24 @@ const UploadPhoto = ({ onUpload, onClose, refreshPhotos }) => {
       formData.append('photo', file);
       formData.append('title', title.trim());
       formData.append('description', description.trim());
-      formData.append('location', selectedTab);
+      formData.append('location', selectedTab.toLowerCase());
+
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
 
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/upload`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: formData
       });
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        const data = await response.json();
+        throw new Error(data.message || 'Upload failed');
       }
 
       const data = await response.json();

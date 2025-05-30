@@ -21,29 +21,38 @@ const GalleryTabs = ({ user }) => {
       if (activeTab === 'saved') {
         endpoint = '/api/photos/saved';
       } else if (activeTab === 'digital' || activeTab === 'traditional') {
-        endpoint = `/api/photos?location=${activeTab}`;
+        endpoint = `/api/photos?location=${activeTab.toLowerCase()}`;
+      }
+
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('Not authenticated');
       }
 
       const response = await fetch(`${process.env.REACT_APP_API_URL}${endpoint}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
 
-      if (!response.ok) throw new Error('Failed to fetch photos');
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to fetch photos');
+      }
+
       const data = await response.json();
       
       if (activeTab === 'saved') {
         setSavedPhotos(data);
         setPhotos(data);
       } else {
-        setPhotos(data);
+        setPhotos(data.filter(photo => photo.location === activeTab.toLowerCase()));
       }
 
       // Fetch saved photos IDs for the save button state
       const savedResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/saved`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
       
@@ -52,7 +61,8 @@ const GalleryTabs = ({ user }) => {
         setSavedPhotos(savedData);
       }
     } catch (err) {
-      setError(err.message);
+      console.error('Fetch photos error:', err);
+      setError(err.message || 'Failed to load photos');
     } finally {
       setLoading(false);
     }
