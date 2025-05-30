@@ -67,6 +67,7 @@ const ProfilePage = ({ user: currentUser }) => {
 
   const fetchUserData = async () => {
     try {
+      setLoading(true);
       // Fetch user profile
       const profileResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/profile/${userId}`, {
         headers: {
@@ -207,6 +208,24 @@ const ProfilePage = ({ user: currentUser }) => {
 
   const handlePhotoClick = (photoId) => {
     navigate(`/photos/${photoId}`);
+  };
+
+  const handleSavePhoto = async (photoId) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/save/${photoId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to save photo');
+
+      const data = await response.json();
+      setSavedPhotos(prev => [...prev, data]);
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   if (loading) {
@@ -382,6 +401,11 @@ const ProfilePage = ({ user: currentUser }) => {
             photos={activeTab === 'photos' ? photos : savedPhotos}
             loading={loading}
             onPhotoClick={handlePhotoClick}
+            onSavePhoto={handleSavePhoto}
+            showSaveButton={true}
+            savedPhotos={savedPhotos.map(photo => photo._id)}
+            selectedTab={activeTab}
+            refreshPhotos={fetchUserData}
           />
         </motion.div>
       </AnimatePresence>

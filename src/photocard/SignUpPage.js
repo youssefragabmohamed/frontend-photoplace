@@ -72,87 +72,53 @@ const SignUpPage = ({ onSignUp }) => {
   };
 
   return (
-    <div className="container">
-      <div className="card" style={{ 
-        maxWidth: "400px", 
-        margin: "var(--space-xl) auto", 
-        padding: "var(--space-lg)" 
-      }}>
-        <h1 style={{ textAlign: "center", marginBottom: "var(--space-lg)" }}>
-          Sign Up
-        </h1>
-        
-        {status.error && (
-          <div className="notification error" style={{ marginBottom: "var(--space-md)" }}>
-            {status.error}
-          </div>
-        )}
+    <div className="auth-container">
+      <div className="auth-header">
+        <h1>Create Account</h1>
+        <p>Join PhotoMarket today</p>
+      </div>
 
-        {status.success && (
-          <div className="notification success" style={{ marginBottom: "var(--space-md)" }}>
-            Account created successfully! Redirecting...
-          </div>
-        )}
-
-        <form 
-          onSubmit={handleSubmit} 
-          className="grid" 
-          style={{ gap: "var(--space-md)" }}
-        >
-          <input
-            type="text"
-            name="username"
-            placeholder="Username"
-            value={form.username}
-            onChange={handleChange}
-            className="form-input"
-            required
-            minLength={3}
-            autoComplete="username"
-          />
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={form.email}
-            onChange={handleChange}
-            className="form-input"
-            required
-            autoComplete="email"
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder="Password (min 6 characters)"
-            value={form.password}
-            onChange={handleChange}
-            className="form-input"
-            required
-            minLength={6}
-            autoComplete="new-password"
-          />
-          <button 
-            type="submit" 
-            className="btn btn-primary"
-            disabled={status.loading}
-          >
-            {status.loading ? (
-              <>
-                <span className="spinner"></span>
-                Creating account...
-              </>
-            ) : "Sign Up"}
-          </button>
-        </form>
-
-        <div style={{ marginTop: "var(--space-lg)", textAlign: "center" }}>
-          <p className="text-muted">
-            Already have an account? {' '}
-            <NavLink to="/login" style={{ color: "var(--primary)" }}>
-              Log in
-            </NavLink>
-          </p>
+      {status.error && (
+        <div className="notification error">
+          {status.error}
         </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="auth-form">
+        <input
+          type="text"
+          name="username"
+          placeholder="Username"
+          value={form.username}
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={form.password}
+          onChange={handleChange}
+          required
+        />
+        <button 
+          type="submit"
+          disabled={status.loading}
+        >
+          {status.loading ? "Creating Account..." : "Create Account"}
+        </button>
+      </form>
+
+      <div className="auth-footer">
+        <p>Already have an account? <NavLink to="/login">Sign in</NavLink></p>
       </div>
     </div>
   );

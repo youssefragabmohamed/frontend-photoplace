@@ -30,45 +30,43 @@ const LoginPage = ({ handleLogin }) => {
   };
 
   return (
-    <div className="container">
-      <div className="card" style={{ maxWidth: "400px", margin: "var(--space-xl) auto", padding: "var(--space-lg)" }}>
-        <h1 style={{ textAlign: "center", marginBottom: "var(--space-lg)" }}>Log In</h1>
-        
-        {error && (
-          <div className="notification error" style={{ marginBottom: "var(--space-md)" }}>
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="grid" style={{ gap: "var(--space-md)" }}>
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            onChange={handleChange}
-            className="form-input"
-            required
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            onChange={handleChange}
-            className="form-input"
-            required
-          />
-          <button 
-            type="submit" 
-            className="btn btn-primary"
-            disabled={loading}
-          >
-            {loading ? "Logging in..." : "Log In"}
-          </button>
-        </form>
-
-        <div style={{ marginTop: "var(--space-lg)", textAlign: "center" }}>
-          <p className="text-muted">Don't have an account? <NavLink to="/signup" style={{ color: "var(--primary)" }}>Sign up</NavLink></p>
+    <div className="auth-container">
+      <div className="auth-header">
+        <h1>Welcome Back</h1>
+        <p>Sign in to continue to PhotoMarket</p>
+      </div>
+      
+      {error && (
+        <div className="notification error">
+          {error}
         </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="auth-form">
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          onChange={handleChange}
+          required
+        />
+        <button 
+          type="submit" 
+          disabled={loading}
+        >
+          {loading ? "Signing in..." : "Sign In"}
+        </button>
+      </form>
+
+      <div className="auth-footer">
+        <p>Don't have an account? <NavLink to="/signup">Sign up</NavLink></p>
       </div>
     </div>
   );

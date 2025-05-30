@@ -58,7 +58,8 @@ const App = () => {
   }, []);
 
   const handleLogin = async (userData) => {
-    setUser(userData);
+    localStorage.setItem('authToken', userData.token);
+    setUser(userData.user);
     setNotification({
       message: 'Successfully logged in!',
       type: 'success'
@@ -66,7 +67,8 @@ const App = () => {
   };
 
   const handleSignUp = async (userData) => {
-    setUser(userData);
+    localStorage.setItem('authToken', userData.token);
+    setUser(userData.user);
     setNotification({
       message: 'Account created successfully!',
       type: 'success'

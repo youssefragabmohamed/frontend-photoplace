@@ -116,12 +116,6 @@ const GalleryTabs = ({ user }) => {
           >
             Traditional Gallery
           </button>
-          <button
-            className={`tab-button ${activeTab === 'saved' ? 'active' : ''}`}
-            onClick={() => setActiveTab('saved')}
-          >
-            Saved Photos
-          </button>
         </div>
       </div>
 

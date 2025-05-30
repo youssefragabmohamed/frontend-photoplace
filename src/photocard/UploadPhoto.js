@@ -58,7 +58,7 @@ const UploadPhoto = ({ onUpload, onClose, refreshPhotos }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Clear any previous errors
+    setError("");
 
     if (!file) {
       setError("Please select an image file");
@@ -72,23 +72,32 @@ const UploadPhoto = ({ onUpload, onClose, refreshPhotos }) => {
 
     try {
       setIsUploading(true);
-      const result = await onUpload({
-        file,
-        title: title.trim(),
-        description: description.trim(),
-        location: selectedTab
+      const formData = new FormData();
+      formData.append('photo', file);
+      formData.append('title', title.trim());
+      formData.append('description', description.trim());
+      formData.append('location', selectedTab);
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+        body: formData
       });
 
-      if (result?.success && result?.data?.photo) {
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await response.json();
+      if (data.success || data.photo) {
         resetForm();
-        if (refreshPhotos) {
-          await refreshPhotos(); // Trigger photo refresh
-        }
-        if (onClose) {
-          onClose(); // Close the upload modal if applicable
-        }
+        if (onUpload) onUpload(data.photo);
+        if (refreshPhotos) refreshPhotos();
+        window.location.href = '/';
       } else {
-        throw new Error(result?.error || "Upload failed, please try again.");
+        throw new Error(data.message || 'Upload failed');
       }
     } catch (error) {
       console.error("Upload error:", error);
