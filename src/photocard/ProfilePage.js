@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCamera, faUserEdit, faLink, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -32,6 +32,9 @@ const ProfilePage = ({ user: currentUser }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('photos');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [showCropModal, setShowCropModal] = useState(false);
   const [crop, setCrop] = useState({ unit: '%', width: 90, height: 90, x: 5, y: 5 });
@@ -42,6 +45,8 @@ const ProfilePage = ({ user: currentUser }) => {
   const [uploadLoading, setUploadLoading] = useState(false);
   const fileInputRef = useRef(null);
   const imgRef = useRef(null);
+  const observer = useRef();
+  const lastPhotoElementRef = useRef(null);
 
   // Animation variants
   const fadeIn = {
@@ -61,35 +66,75 @@ const ProfilePage = ({ user: currentUser }) => {
     return `${process.env.REACT_APP_API_URL}${url}`;
   };
 
+  // Intersection Observer callback
+  const lastPhotoRef = useCallback(node => {
+    if (loading || loadingMore) return;
+    if (observer.current) observer.current.disconnect();
+
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setPage(prevPage => prevPage + 1);
+      }
+    });
+
+    if (node) observer.current.observe(node);
+  }, [loading, loadingMore, hasMore]);
+
   useEffect(() => {
-    fetchUserData();
-  }, [userId]);
+    setPhotos([]);
+    setPage(1);
+    setHasMore(true);
+    fetchUserData(1, true);
+  }, [userId, activeTab]);
 
-  const fetchUserData = async () => {
+  useEffect(() => {
+    if (page > 1) {
+      fetchUserData(page, false);
+    }
+  }, [page]);
+
+  const fetchUserData = async (pageNum = 1, reset = false) => {
+    if (pageNum === 1) setLoading(true);
+    else setLoadingMore(true);
+
     try {
-      setLoading(true);
-      // Fetch user profile
-      const profileResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/profile/${userId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        },
-      });
-      if (!profileResponse.ok) throw new Error('Failed to fetch profile');
-      const profileData = await profileResponse.json();
-      setProfileUser(profileData.user);
+      // Fetch user profile only on first page or reset
+      if (pageNum === 1 || reset) {
+        const profileResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/profile/${userId}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          },
+        });
+        if (!profileResponse.ok) throw new Error('Failed to fetch profile');
+        const profileData = await profileResponse.json();
+        setProfileUser(profileData.user);
+      }
 
-      // Fetch user's photos
-      const photosResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/user/${userId}`, {
+      // Fetch photos with pagination
+      let endpoint = `/api/photos/user/${userId}?page=${pageNum}&limit=12`;
+      if (activeTab === 'saved') {
+        endpoint = `/api/photos/saved?page=${pageNum}&limit=12`;
+      }
+
+      const photosResponse = await fetch(`${process.env.REACT_APP_API_URL}${endpoint}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
         },
       });
       if (!photosResponse.ok) throw new Error('Failed to fetch photos');
       const photosData = await photosResponse.json();
-      setPhotos(photosData);
 
-      // If viewing own profile, fetch saved photos
-      if (currentUser?._id === userId) {
+      if (activeTab === 'saved') {
+        setSavedPhotos(prev => reset ? photosData.photos : [...prev, ...photosData.photos]);
+        setPhotos(prev => reset ? photosData.photos : [...prev, ...photosData.photos]);
+      } else {
+        setPhotos(prev => reset ? photosData.photos : [...prev, ...photosData.photos]);
+      }
+
+      setHasMore(photosData.hasMore);
+
+      // If viewing own profile and on first page, fetch saved photos
+      if (currentUser?._id === userId && (pageNum === 1 || reset)) {
         const savedResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/saved`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
@@ -97,13 +142,14 @@ const ProfilePage = ({ user: currentUser }) => {
         });
         if (savedResponse.ok) {
           const savedData = await savedResponse.json();
-          setSavedPhotos(savedData);
+          setSavedPhotos(savedData.photos || []);
         }
       }
     } catch (err) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      if (pageNum === 1) setLoading(false);
+      else setLoadingMore(false);
     }
   };
 
@@ -373,14 +419,24 @@ const ProfilePage = ({ user: currentUser }) => {
       <div className="profile-tabs">
         <button
           className={`tab-button ${activeTab === 'photos' ? 'active' : ''}`}
-          onClick={() => setActiveTab('photos')}
+          onClick={() => {
+            setActiveTab('photos');
+            setPhotos([]);
+            setPage(1);
+            setHasMore(true);
+          }}
         >
           Posts
         </button>
         {isOwnProfile && (
           <button
             className={`tab-button ${activeTab === 'saved' ? 'active' : ''}`}
-            onClick={() => setActiveTab('saved')}
+            onClick={() => {
+              setActiveTab('saved');
+              setPhotos([]);
+              setPage(1);
+              setHasMore(true);
+            }}
           >
             Saved
           </button>
@@ -404,7 +460,9 @@ const ProfilePage = ({ user: currentUser }) => {
             showSaveButton={true}
             savedPhotos={savedPhotos.map(photo => photo._id)}
             selectedTab={activeTab}
-            refreshPhotos={fetchUserData}
+            refreshPhotos={() => fetchUserData(1, true)}
+            lastPhotoRef={lastPhotoRef}
+            loadingMore={loadingMore}
           />
         </motion.div>
       </AnimatePresence>

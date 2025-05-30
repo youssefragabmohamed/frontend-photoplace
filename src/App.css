@@ -1046,7 +1046,9 @@ h3 { font-size: var(--text-lg); }
   width: 100%;
   padding: 20px;
   overflow-y: auto;
-  height: calc(100vh - 200px); /* Adjust based on your header/footer height */
+  height: calc(100vh - 200px);
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) var(--background);
 }
 
 .masonry-grid {
@@ -1841,4 +1843,67 @@ h3 { font-size: var(--text-lg); }
   .uploader-info:hover {
     background-color: rgba(255, 255, 255, 0.05);
   }
+}
+
+.compression-status {
+  margin-top: 12px;
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: 500;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+/* Loading More Styles */
+.loading-more {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  margin-top: 20px;
+  color: var(--text-secondary);
+}
+
+.loading-more .spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--background);
+  border-top: 3px solid var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+.loading-more p {
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Update masonry container for better scrolling */
+.masonry-container {
+  width: 100%;
+  padding: 20px;
+  overflow-y: auto;
+  height: calc(100vh - 200px);
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) var(--background);
+}
+
+.masonry-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.masonry-container::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+.masonry-container::-webkit-scrollbar-thumb {
+  background-color: var(--primary);
+  border-radius: 4px;
 }

@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faCloudUploadAlt } from '@fortawesome/free-solid-svg-icons';
 import '../App.css';
 import { useNavigate } from 'react-router-dom';
+import imageCompression from 'browser-image-compression';
 
 const UploadPhoto = ({ onUpload, onClose, refreshPhotos }) => {
   const [title, setTitle] = useState("");
@@ -13,31 +14,46 @@ const UploadPhoto = ({ onUpload, onClose, refreshPhotos }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedTab, setSelectedTab] = useState('digital');
+  const [compressionStatus, setCompressionStatus] = useState('');
 
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
-  const handleFileChange = (e) => {
+  const options = {
+    maxSizeMB: 1,
+    maxWidthOrHeight: 1920,
+    useWebWorker: true,
+    onProgress: (progress) => {
+      setCompressionStatus(`Compressing: ${Math.round(progress)}%`);
+    }
+  };
+
+  const handleFileSelect = async (e) => {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
 
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!validTypes.includes(selectedFile.type)) {
-      setError("Please upload a valid image file (JPEG, PNG, GIF, WEBP)");
+    if (!selectedFile.type.startsWith('image/')) {
+      setError('Please select an image file');
       return;
     }
 
-    if (selectedFile.size > 10 * 1024 * 1024) {
-      setError("File size too large (max 10MB)");
-      return;
+    try {
+      setCompressionStatus('Starting compression...');
+      const compressedFile = await imageCompression(selectedFile, options);
+      setCompressionStatus('');
+      
+      setFile(compressedFile);
+      const previewUrl = URL.createObjectURL(compressedFile);
+      setPreview(previewUrl);
+      setError('');
+
+      // Log compression results
+      console.log('Original file size:', selectedFile.size / 1024 / 1024, 'MB');
+      console.log('Compressed file size:', compressedFile.size / 1024 / 1024, 'MB');
+    } catch (err) {
+      setError('Error compressing image: ' + err.message);
+      setCompressionStatus('');
     }
-
-    setFile(selectedFile);
-    setError("");
-
-    const reader = new FileReader();
-    reader.onloadend = () => setPreview(reader.result);
-    reader.readAsDataURL(selectedFile);
   };
 
   const handleDragOver = (e) => {
@@ -48,13 +64,32 @@ const UploadPhoto = ({ onUpload, onClose, refreshPhotos }) => {
 
   const handleDragLeave = () => setIsDragging(false);
 
-  const handleDrop = (e) => {
+  const handleDrop = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      fileInputRef.current.files = e.dataTransfer.files;
-      handleFileChange({ target: { files: e.dataTransfer.files } });
+      const droppedFile = e.dataTransfer.files[0];
+      if (!droppedFile) return;
+
+      if (!droppedFile.type.startsWith('image/')) {
+        setError('Please drop an image file');
+        return;
+      }
+
+      try {
+        setCompressionStatus('Starting compression...');
+        const compressedFile = await imageCompression(droppedFile, options);
+        setCompressionStatus('');
+        
+        setFile(compressedFile);
+        const previewUrl = URL.createObjectURL(compressedFile);
+        setPreview(previewUrl);
+        setError('');
+      } catch (err) {
+        setError('Error compressing image: ' + err.message);
+        setCompressionStatus('');
+      }
     }
   };
 
@@ -213,13 +248,16 @@ const UploadPhoto = ({ onUpload, onClose, refreshPhotos }) => {
               >
                 Browse files
               </button>
+              {compressionStatus && (
+                <p className="compression-status">{compressionStatus}</p>
+              )}
             </div>
             <input
               type="file"
               name="photo"
               ref={fileInputRef}
               accept="image/*"
-              onChange={handleFileChange}
+              onChange={handleFileSelect}
               style={{ display: "none" }}
               required
             />

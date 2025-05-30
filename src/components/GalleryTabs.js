@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import PhotoBox from '../photocard/Photobox';
 import '../App.css';
@@ -9,13 +9,37 @@ const GalleryTabs = ({ user }) => {
   const [savedPhotos, setSavedPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const observer = useRef();
+  const lastPhotoElementRef = useRef(null);
+
+  // Intersection Observer callback
+  const lastPhotoRef = useCallback(node => {
+    if (loading || loadingMore) return;
+    if (observer.current) observer.current.disconnect();
+
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setPage(prevPage => prevPage + 1);
+      }
+    });
+
+    if (node) observer.current.observe(node);
+  }, [loading, loadingMore, hasMore]);
 
   useEffect(() => {
-    fetchPhotos();
+    setPhotos([]);
+    setPage(1);
+    setHasMore(true);
+    fetchPhotos(1, true);
   }, [activeTab]);
 
-  const fetchPhotos = async () => {
-    setLoading(true);
+  const fetchPhotos = async (pageNum = 1, reset = false) => {
+    if (pageNum === 1) setLoading(true);
+    else setLoadingMore(true);
+
     try {
       let endpoint = '/api/photos';
       if (activeTab === 'saved') {
@@ -23,6 +47,9 @@ const GalleryTabs = ({ user }) => {
       } else if (activeTab === 'digital' || activeTab === 'traditional') {
         endpoint = `/api/photos?location=${activeTab.toLowerCase()}`;
       }
+
+      // Add pagination parameters
+      endpoint += `${endpoint.includes('?') ? '&' : '?'}page=${pageNum}&limit=12`;
 
       const token = localStorage.getItem('authToken');
       if (!token) {
@@ -43,11 +70,16 @@ const GalleryTabs = ({ user }) => {
       const data = await response.json();
       
       if (activeTab === 'saved') {
-        setSavedPhotos(data);
-        setPhotos(data);
+        setSavedPhotos(data.photos);
+        setPhotos(prev => reset ? data.photos : [...prev, ...data.photos]);
       } else {
-        setPhotos(data.filter(photo => photo.location === activeTab.toLowerCase()));
+        const filteredPhotos = data.photos.filter(photo => 
+          photo.location === activeTab.toLowerCase()
+        );
+        setPhotos(prev => reset ? filteredPhotos : [...prev, ...filteredPhotos]);
       }
+
+      setHasMore(data.hasMore);
 
       // Fetch saved photos IDs for the save button state
       const savedResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/saved`, {
@@ -58,13 +90,14 @@ const GalleryTabs = ({ user }) => {
       
       if (savedResponse.ok) {
         const savedData = await savedResponse.json();
-        setSavedPhotos(savedData);
+        setSavedPhotos(savedData.photos || []);
       }
     } catch (err) {
       console.error('Fetch photos error:', err);
       setError(err.message || 'Failed to load photos');
     } finally {
-      setLoading(false);
+      if (pageNum === 1) setLoading(false);
+      else setLoadingMore(false);
     }
   };
 
@@ -143,7 +176,9 @@ const GalleryTabs = ({ user }) => {
         showSaveButton={true}
         savedPhotos={savedPhotos.map(photo => photo._id)}
         selectedTab={activeTab}
-        refreshPhotos={fetchPhotos}
+        refreshPhotos={() => fetchPhotos(1, true)}
+        lastPhotoRef={lastPhotoRef}
+        loadingMore={loadingMore}
       />
     </div>
   );

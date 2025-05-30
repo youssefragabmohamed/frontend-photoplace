@@ -7,7 +7,18 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBookmark as faBookmarkSolid } from '@fortawesome/free-solid-svg-icons';
 import { faBookmark as faBookmarkRegular } from '@fortawesome/free-regular-svg-icons';
 
-const PhotoBox = ({ photos = [], loading, onDeletePhoto, selectedTab, onSavePhoto, showSaveButton, savedPhotos = [], refreshPhotos }) => {
+const PhotoBox = ({ 
+  photos = [], 
+  loading, 
+  onDeletePhoto, 
+  selectedTab, 
+  onSavePhoto, 
+  showSaveButton, 
+  savedPhotos = [], 
+  refreshPhotos,
+  lastPhotoRef,
+  loadingMore
+}) => {
   const navigate = useNavigate();
 
   const breakpointColumnsObj = {
@@ -17,7 +28,7 @@ const PhotoBox = ({ photos = [], loading, onDeletePhoto, selectedTab, onSavePhot
     600: 1
   };
 
-  if (loading) {
+  if (loading && photos.length === 0) {
     return (
       <div className="loading-container">
         <div className="spinner"></div>
@@ -71,8 +82,12 @@ const PhotoBox = ({ photos = [], loading, onDeletePhoto, selectedTab, onSavePhot
         className="masonry-grid"
         columnClassName="masonry-grid_column"
       >
-        {photos.filter(photo => photo && photo._id && photo.url).map((photo) => (
-          <div key={photo._id} className="masonry-item">
+        {photos.filter(photo => photo && photo._id && photo.url).map((photo, index) => (
+          <div 
+            key={photo._id} 
+            className="masonry-item"
+            ref={index === photos.length - 1 ? lastPhotoRef : null}
+          >
             <Link 
               to={`/photos/${photo._id}`} 
               className="masonry-item-link" 
@@ -93,44 +108,38 @@ const PhotoBox = ({ photos = [], loading, onDeletePhoto, selectedTab, onSavePhot
                 }}
               />
               <div className="photo-overlay">
-                <p className="photo-title">{photo.title || "Untitled"}</p>
-                <button
-                  className="btn btn-danger"
-                  onClick={(e) => handleDelete(photo._id, e)}
-                  style={{
-                    position: "absolute",
-                    top: "var(--space-sm)",
-                    right: "var(--space-sm)",
-                    padding: "var(--space-xs)"
-                  }}
-                >
-                  Delete
-                </button>
-                <button 
-                  onClick={(e) => handleSave(photo._id, e)}
-                  style={{
-                    position: 'absolute',
-                    bottom: '10px',
-                    right: '10px',
-                    background: 'rgba(0,0,0,0.5)',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '30px',
-                    height: '30px',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <FontAwesomeIcon icon={savedPhotos.includes(photo._id) ? faBookmarkSolid : faBookmarkRegular} />
-                </button>
+                <h3 className="photo-title">{photo.title}</h3>
+                <div className="photo-actions">
+                  {showSaveButton && (
+                    <button
+                      className={`action-button ${savedPhotos.includes(photo._id) ? 'active' : ''}`}
+                      onClick={(e) => handleSave(photo._id, e)}
+                    >
+                      <FontAwesomeIcon 
+                        icon={savedPhotos.includes(photo._id) ? faBookmarkSolid : faBookmarkRegular} 
+                      />
+                    </button>
+                  )}
+                  {photo.userId === localStorage.getItem('userId') && (
+                    <button
+                      className="action-button delete"
+                      onClick={(e) => handleDelete(photo._id, e)}
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
               </div>
             </Link>
           </div>
         ))}
       </Masonry>
+      {loadingMore && (
+        <div className="loading-more">
+          <div className="spinner"></div>
+          <p>Loading more photos...</p>
+        </div>
+      )}
     </div>
   );
 };
