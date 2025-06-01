@@ -52,14 +52,25 @@ const SearchPage = () => {
   }, [query, location, sortBy, type]);
 
   const performSearch = async (pageNum, isNewSearch = false) => {
+    // Define searchId outside try block so it's available in catch
+    const searchId = Date.now().toString();
+    currentSearchRef.current = searchId;
+    
     try {
       // Create new AbortController for this request
       abortControllerRef.current = new AbortController();
-      const searchId = Date.now().toString();
-      currentSearchRef.current = searchId;
 
-      setLoading(true);
+      if (isNewSearch) {
+        setLoading(true);
+      }
       setError(null);
+
+      // Don't perform search if query is empty
+      if (!query.trim() && type === 'photos') {
+        setPhotos([]);
+        setLoading(false);
+        return;
+      }
 
       const token = localStorage.getItem('authToken');
       if (!token) {
@@ -70,6 +81,8 @@ const SearchPage = () => {
       const endpoint = type === 'photos' 
         ? `${process.env.REACT_APP_API_URL}/api/photos/search?query=${encodeURIComponent(query)}&location=${encodeURIComponent(location)}&sortBy=${encodeURIComponent(sortBy)}&page=${pageNum}`
         : `${process.env.REACT_APP_API_URL}/api/users/search?query=${encodeURIComponent(query)}&page=${pageNum}`;
+
+      console.log('Searching with endpoint:', endpoint); // Debug log
 
       const response = await fetch(endpoint, {
         headers: {
@@ -83,22 +96,17 @@ const SearchPage = () => {
         return;
       }
 
-      const data = await response.json();
-
-      // Handle authentication errors
-      if (response.status === 401) {
-        localStorage.removeItem('authToken');
-        navigate('/login');
-        return;
-      }
-
       if (!response.ok) {
-        throw new Error(data.message || `Failed to fetch ${type}`);
+        if (response.status === 401) {
+          localStorage.removeItem('authToken');
+          navigate('/login');
+          return;
+        }
+        throw new Error('Failed to fetch search results');
       }
 
-      if (!data.success) {
-        throw new Error(data.message || 'Search failed');
-      }
+      const data = await response.json();
+      console.log('Search response:', data); // Debug log
 
       if (type === 'photos') {
         setPhotos(prev => isNewSearch ? data.photos : [...prev, ...data.photos]);
@@ -109,6 +117,7 @@ const SearchPage = () => {
       setHasMore(data.hasMore);
       setPage(pageNum);
     } catch (err) {
+      console.error('Search error:', err); // Debug log
       // Only set error if it's not an abort error and this is still the current search
       if (err.name !== 'AbortError' && currentSearchRef.current === searchId) {
         setError(err.message);
@@ -220,7 +229,7 @@ const SearchPage = () => {
         {renderResults()}
       </div>
 
-      {loading && (photos.length === 0 && users.length === 0) && (
+      {loading && (photos.length === 0 && users.length === 0) && query.trim() && (
         <div className="loading-state">
           <div className="loading-spinner"></div>
           <p>Searching for {type}...</p>
