@@ -96,20 +96,21 @@ const SearchPage = () => {
         throw new Error(data.message || `Failed to fetch ${type}`);
       }
 
-      if (!data.photos && !data.users) {
-        throw new Error('Invalid response format from server');
+      if (!data.success) {
+        throw new Error(data.message || 'Search failed');
       }
-      
+
       if (type === 'photos') {
         setPhotos(prev => isNewSearch ? data.photos : [...prev, ...data.photos]);
       } else {
         setUsers(prev => isNewSearch ? data.users : [...prev, ...data.users]);
       }
+      
       setHasMore(data.hasMore);
       setPage(pageNum);
     } catch (err) {
-      // Only set error if it's not an abort error and not an auth error
-      if (err.name !== 'AbortError') {
+      // Only set error if it's not an abort error and this is still the current search
+      if (err.name !== 'AbortError' && currentSearchRef.current === searchId) {
         setError(err.message);
         // Reset data on error if it's a new search
         if (isNewSearch) {
