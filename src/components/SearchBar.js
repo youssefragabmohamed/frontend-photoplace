@@ -1,14 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { debounce } from 'lodash';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faFilter, faTimes, faImage, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faTimes, faImage, faUser } from '@fortawesome/free-solid-svg-icons';
 
-const SearchBar = ({ onSearch, initialQuery = '', initialLocation = 'all', initialSortBy = 'recent', initialType = 'photos' }) => {
+const SearchBar = ({ onSearch, initialQuery = '', initialType = 'photos' }) => {
   const [query, setQuery] = useState(initialQuery);
-  const [location, setLocation] = useState(initialLocation);
-  const [sortBy, setSortBy] = useState(initialSortBy);
   const [searchType, setSearchType] = useState(initialType);
-  const [showFilters, setShowFilters] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const isComponentMounted = useRef(true);
 
@@ -16,11 +13,9 @@ const SearchBar = ({ onSearch, initialQuery = '', initialLocation = 'all', initi
   useEffect(() => {
     if (isComponentMounted.current) {
       setQuery(initialQuery);
-      setLocation(initialLocation);
-      setSortBy(initialSortBy);
       setSearchType(initialType);
     }
-  }, [initialQuery, initialLocation, initialSortBy, initialType]);
+  }, [initialQuery, initialType]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -34,9 +29,9 @@ const SearchBar = ({ onSearch, initialQuery = '', initialLocation = 'all', initi
 
   // Debounced search function with proper cleanup
   const debouncedSearch = useCallback(
-    debounce((searchQuery, searchLocation, searchSortBy, type) => {
+    debounce((searchQuery, type) => {
       if (isComponentMounted.current) {
-        onSearch({ query: searchQuery, location: searchLocation, sortBy: searchSortBy, type });
+        onSearch({ query: searchQuery, type });
         setIsSearching(false);
       }
     }, 500),
@@ -47,38 +42,18 @@ const SearchBar = ({ onSearch, initialQuery = '', initialLocation = 'all', initi
   useEffect(() => {
     if (isComponentMounted.current) {
       setIsSearching(true);
-      // Validate inputs before searching
       const validatedQuery = query.trim();
-      const validatedLocation = validLocations.includes(location) ? location : 'all';
-      const validatedSortBy = sortOptions.map(opt => opt.value).includes(sortBy) ? sortBy : 'recent';
-      
-      debouncedSearch(validatedQuery, validatedLocation, validatedSortBy, searchType);
+      debouncedSearch(validatedQuery, searchType);
     }
     return () => debouncedSearch.cancel();
-  }, [query, location, sortBy, searchType, debouncedSearch]);
+  }, [query, searchType, debouncedSearch]);
 
   const handleClear = () => {
     if (isComponentMounted.current) {
       setQuery("");
-      setLocation("all");
-      setSortBy("recent");
-      setShowFilters(false);
+      setSearchType("photos");
     }
   };
-
-  const validLocations = [
-    { value: "all", label: "All Locations" },
-    { value: "digital", label: "Digital" },
-    { value: "nature", label: "Nature" },
-    { value: "urban", label: "Urban" },
-    { value: "studio", label: "Studio" }
-  ];
-
-  const sortOptions = [
-    { value: "recent", label: "Most Recent" },
-    { value: "likes", label: "Most Liked" },
-    { value: "oldest", label: "Oldest First" }
-  ];
 
   const handleInputChange = (e) => {
     const value = e.target.value;
@@ -120,7 +95,7 @@ const SearchBar = ({ onSearch, initialQuery = '', initialLocation = 'all', initi
             aria-label={`Search ${searchType}`}
             maxLength={50}
           />
-          {(query || location !== "all" || sortBy !== "recent") && (
+          {query && (
             <button 
               onClick={handleClear} 
               className="clear-button"
@@ -130,53 +105,7 @@ const SearchBar = ({ onSearch, initialQuery = '', initialLocation = 'all', initi
             </button>
           )}
         </div>
-        {searchType === 'photos' && (
-          <button
-            className={`filter-toggle ${showFilters ? 'active' : ''}`}
-            onClick={() => setShowFilters(!showFilters)}
-            aria-label="Toggle filters"
-          >
-            <FontAwesomeIcon icon={faFilter} />
-            Filters
-          </button>
-        )}
       </div>
-
-      {showFilters && searchType === 'photos' && (
-        <div className="search-filters" role="region" aria-label="Search filters">
-          <div className="filter-group">
-            <label htmlFor="location-select">Location:</label>
-            <select
-              id="location-select"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="filter-select"
-            >
-              {validLocations.map(loc => (
-                <option key={loc.value} value={loc.value}>
-                  {loc.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label htmlFor="sort-select">Sort by:</label>
-            <select
-              id="sort-select"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="filter-select"
-            >
-              {sortOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      )}
 
       {isSearching && (
         <div className="search-status" role="status">

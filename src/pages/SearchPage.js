@@ -17,8 +17,6 @@ const SearchPage = () => {
 
   // Get search parameters from URL
   const query = searchParams.get('q') || '';
-  const location = searchParams.get('location') || 'all';
-  const sortBy = searchParams.get('sort') || 'recent';
   const type = searchParams.get('type') || 'photos';
 
   // Cleanup on unmount
@@ -46,18 +44,16 @@ const SearchPage = () => {
       abortControllerRef.current.abort();
     }
     
-    if (query || (type === 'photos' && (location !== 'all' || sortBy !== 'recent'))) {
+    if (query) {
       performSearch(1, true);
     }
-  }, [query, location, sortBy, type]);
+  }, [query, type]);
 
   const performSearch = async (pageNum, isNewSearch = false) => {
-    // Define searchId outside try block so it's available in catch
     const searchId = Date.now().toString();
     currentSearchRef.current = searchId;
     
     try {
-      // Create new AbortController for this request
       abortControllerRef.current = new AbortController();
 
       if (isNewSearch) {
@@ -65,9 +61,12 @@ const SearchPage = () => {
       }
       setError(null);
 
-      // Don't perform search if query is empty
-      if (!query.trim() && type === 'photos') {
-        setPhotos([]);
+      if (!query.trim()) {
+        if (type === 'photos') {
+          setPhotos([]);
+        } else {
+          setUsers([]);
+        }
         setLoading(false);
         return;
       }
@@ -79,10 +78,8 @@ const SearchPage = () => {
       }
 
       const endpoint = type === 'photos' 
-        ? `${process.env.REACT_APP_API_URL}/api/photos/search?query=${encodeURIComponent(query)}&location=${encodeURIComponent(location)}&sortBy=${encodeURIComponent(sortBy)}&page=${pageNum}`
-        : `${process.env.REACT_APP_API_URL}/api/users/search?query=${encodeURIComponent(query)}&page=${pageNum}`;
-
-      console.log('Searching with endpoint:', endpoint); // Debug log
+        ? `${process.env.REACT_APP_API_URL}/api/photos/search?q=${encodeURIComponent(query)}&page=${pageNum}&limit=12`
+        : `${process.env.REACT_APP_API_URL}/api/users/search?q=${encodeURIComponent(query)}&page=${pageNum}&limit=12`;
 
       const response = await fetch(endpoint, {
         headers: {
@@ -91,7 +88,6 @@ const SearchPage = () => {
         signal: abortControllerRef.current.signal
       });
 
-      // Check if this is still the current search
       if (currentSearchRef.current !== searchId) {
         return;
       }
@@ -106,22 +102,19 @@ const SearchPage = () => {
       }
 
       const data = await response.json();
-      console.log('Search response:', data); // Debug log
 
       if (type === 'photos') {
         setPhotos(prev => isNewSearch ? data.photos : [...prev, ...data.photos]);
+        setHasMore(data.pagination.page < data.pagination.pages);
       } else {
         setUsers(prev => isNewSearch ? data.users : [...prev, ...data.users]);
+        setHasMore(data.pagination.page < data.pagination.pages);
       }
       
-      setHasMore(data.hasMore);
       setPage(pageNum);
     } catch (err) {
-      console.error('Search error:', err); // Debug log
-      // Only set error if it's not an abort error and this is still the current search
       if (err.name !== 'AbortError' && currentSearchRef.current === searchId) {
         setError(err.message);
-        // Reset data on error if it's a new search
         if (isNewSearch) {
           if (type === 'photos') {
             setPhotos([]);
@@ -137,19 +130,13 @@ const SearchPage = () => {
     }
   };
 
-  const handleSearch = ({ query: newQuery, location: newLocation, sortBy: newSort, type: newType }) => {
-    // Cancel any ongoing requests before updating search params
+  const handleSearch = ({ query: newQuery, type: newType }) => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
 
-    // Update URL with search parameters
     const params = new URLSearchParams();
     if (newQuery) params.set('q', newQuery);
-    if (newType === 'photos') {
-      if (newLocation !== 'all') params.set('location', newLocation);
-      if (newSort !== 'recent') params.set('sort', newSort);
-    }
     params.set('type', newType);
     
     setSearchParams(params);
@@ -174,7 +161,7 @@ const SearchPage = () => {
       ) : !loading && query ? (
         <div className="no-results">
           <h3>No photos found</h3>
-          <p>Try adjusting your search or filters</p>
+          <p>Try adjusting your search</p>
         </div>
       ) : null;
     } else {
@@ -182,13 +169,13 @@ const SearchPage = () => {
         <div className="users-grid">
           {users.map(user => (
             <div key={user._id} className="user-card" onClick={() => navigate(`/profile/${user._id}`)}>
-              <img src={user.profilePic} alt={user.username} className="user-avatar" />
+              <img src={user.profilePicture || '/default-avatar.png'} alt={user.username} className="user-avatar" />
               <div className="user-info">
                 <h3>{user.username}</h3>
-                {user.name && <p className="user-name">{user.name}</p>}
+                {user.fullName && <p className="user-name">{user.fullName}</p>}
                 {user.bio && <p className="user-bio">{user.bio}</p>}
                 <div className="user-stats">
-                  <span>{user.followersCount} followers</span>
+                  <span>{user.followerCount} followers</span>
                   <span>{user.followingCount} following</span>
                 </div>
               </div>
@@ -214,8 +201,6 @@ const SearchPage = () => {
       <SearchBar
         onSearch={handleSearch}
         initialQuery={query}
-        initialLocation={location}
-        initialSortBy={sortBy}
         initialType={type}
       />
 
