@@ -1,14 +1,22 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from "react";
 import { debounce } from 'lodash';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faTimes, faImage, faUser, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
-const SearchBar = ({ onSearch, initialQuery = '', initialType = 'photos' }) => {
+const SearchBar = forwardRef(({ onSearch, initialQuery = '', initialType = 'photos' }, ref) => {
   const [query, setQuery] = useState(initialQuery);
   const [searchType, setSearchType] = useState(initialType);
   const [isSearching, setIsSearching] = useState(false);
   const [isTabSwitching, setIsTabSwitching] = useState(false);
   const isComponentMounted = useRef(true);
+
+  // Expose methods to parent component
+  useImperativeHandle(ref, () => ({
+    setSearchComplete: () => {
+      setIsSearching(false);
+      setIsTabSwitching(false);
+    }
+  }));
 
   // Update state when initial values change
   useEffect(() => {
@@ -33,8 +41,7 @@ const SearchBar = ({ onSearch, initialQuery = '', initialType = 'photos' }) => {
     debounce((searchQuery, type) => {
       if (isComponentMounted.current) {
         onSearch({ query: searchQuery, type });
-        setIsSearching(false);
-        setIsTabSwitching(false);
+        // Keep searching state true until we get a response
       }
     }, 500),
     [onSearch]
@@ -63,6 +70,8 @@ const SearchBar = ({ onSearch, initialQuery = '', initialType = 'photos' }) => {
     if (isComponentMounted.current) {
       setQuery("");
       setSearchType("photos");
+      setIsSearching(false);
+      setIsTabSwitching(false);
       // Clear search results immediately
       onSearch({ query: '', type: 'photos' });
     }
@@ -73,11 +82,6 @@ const SearchBar = ({ onSearch, initialQuery = '', initialType = 'photos' }) => {
     // Basic input sanitization
     const sanitizedValue = value.replace(/[<>]/g, '');
     setQuery(sanitizedValue);
-    
-    // Show loading immediately when user types
-    if (sanitizedValue.trim()) {
-      setIsSearching(true);
-    }
   };
 
   const handleTypeChange = (type) => {
@@ -157,6 +161,6 @@ const SearchBar = ({ onSearch, initialQuery = '', initialType = 'photos' }) => {
       )}
     </div>
   );
-};
+});
 
 export default SearchBar;

@@ -14,6 +14,7 @@ const SearchPage = () => {
   const navigate = useNavigate();
   const abortControllerRef = useRef(null);
   const currentSearchRef = useRef('');
+  const searchBarRef = useRef(null);
 
   // Get search parameters from URL
   const query = searchParams.get('q') || '';
@@ -68,6 +69,10 @@ const SearchPage = () => {
           setUsers([]);
         }
         setLoading(false);
+        // Tell SearchBar search is complete
+        if (searchBarRef.current) {
+          searchBarRef.current.setSearchComplete();
+        }
         return;
       }
 
@@ -126,6 +131,10 @@ const SearchPage = () => {
     } finally {
       if (currentSearchRef.current === searchId) {
         setLoading(false);
+        // Tell SearchBar search is complete
+        if (searchBarRef.current) {
+          searchBarRef.current.setSearchComplete();
+        }
       }
     }
   };
@@ -203,6 +212,7 @@ const SearchPage = () => {
   return (
     <div className="search-page">
       <SearchBar
+        ref={searchBarRef}
         onSearch={handleSearch}
         initialQuery={query}
         initialType={type}
@@ -217,12 +227,6 @@ const SearchPage = () => {
       <div className="search-results">
         {renderResults()}
       </div>
-
-      {loading && (photos.length === 0 && users.length === 0) && query.trim() && (
-        <div className="loading-state">
-          <div className="loading-spinner"></div>
-        </div>
-      )}
     </div>
   );
 };
