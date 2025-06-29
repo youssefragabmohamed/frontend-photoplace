@@ -73,6 +73,11 @@ const SearchBar = ({ onSearch, initialQuery = '', initialType = 'photos' }) => {
     // Basic input sanitization
     const sanitizedValue = value.replace(/[<>]/g, '');
     setQuery(sanitizedValue);
+    
+    // Show loading immediately when user types
+    if (sanitizedValue.trim()) {
+      setIsSearching(true);
+    }
   };
 
   const handleTypeChange = (type) => {
@@ -83,6 +88,7 @@ const SearchBar = ({ onSearch, initialQuery = '', initialType = 'photos' }) => {
       // If there's a current query, search with new type
       const currentQuery = query.trim();
       if (currentQuery) {
+        setIsSearching(true);
         debouncedSearch(currentQuery, type);
       }
     }
@@ -142,10 +148,11 @@ const SearchBar = ({ onSearch, initialQuery = '', initialType = 'photos' }) => {
         </button>
       </div>
 
-      {/* Loading spinner */}
+      {/* Loading spinner - show immediately when typing */}
       {isSearching && query.trim() && (
         <div className="search-loading">
           <FontAwesomeIcon icon={faSpinner} spin />
+          <span>Searching...</span>
         </div>
       )}
     </div>

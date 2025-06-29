@@ -221,7 +221,6 @@ const SearchPage = () => {
       {loading && (photos.length === 0 && users.length === 0) && query.trim() && (
         <div className="loading-state">
           <div className="loading-spinner"></div>
-          <p>Searching for {type}...</p>
         </div>
       )}
     </div>

@@ -2494,8 +2494,18 @@ h3 { font-size: var(--text-lg); }
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: var(--space-sm);
   padding: var(--space-md);
   color: var(--primary);
+  font-size: var(--text-base);
+  font-weight: 500;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+.search-loading svg {
   font-size: var(--text-lg);
 }
 
