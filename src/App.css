@@ -2490,6 +2490,15 @@ h3 { font-size: var(--text-lg); }
   color: var(--primary);
 }
 
+.search-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-md);
+  color: var(--primary);
+  font-size: var(--text-lg);
+}
+
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
   .search-filter-tabs {

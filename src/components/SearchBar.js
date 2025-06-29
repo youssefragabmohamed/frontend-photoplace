@@ -43,17 +43,28 @@ const SearchBar = ({ onSearch, initialQuery = '', initialType = 'photos' }) => {
   // Trigger search with proper validation
   useEffect(() => {
     if (isComponentMounted.current) {
-      setIsSearching(true);
       const validatedQuery = query.trim();
-      debouncedSearch(validatedQuery, searchType);
+      
+      // Only search if there's actually a query
+      if (validatedQuery) {
+        setIsSearching(true);
+        debouncedSearch(validatedQuery, searchType);
+      } else {
+        // Clear results if query is empty
+        onSearch({ query: '', type: searchType });
+        setIsSearching(false);
+        setIsTabSwitching(false);
+      }
     }
     return () => debouncedSearch.cancel();
-  }, [query, searchType, debouncedSearch]);
+  }, [query, searchType, debouncedSearch, onSearch]);
 
   const handleClear = () => {
     if (isComponentMounted.current) {
       setQuery("");
       setSearchType("photos");
+      // Clear search results immediately
+      onSearch({ query: '', type: 'photos' });
     }
   };
 
@@ -68,6 +79,12 @@ const SearchBar = ({ onSearch, initialQuery = '', initialType = 'photos' }) => {
     if (type !== searchType) {
       setIsTabSwitching(true);
       setSearchType(type);
+      
+      // If there's a current query, search with new type
+      const currentQuery = query.trim();
+      if (currentQuery) {
+        debouncedSearch(currentQuery, type);
+      }
     }
   };
 
@@ -125,9 +142,10 @@ const SearchBar = ({ onSearch, initialQuery = '', initialType = 'photos' }) => {
         </button>
       </div>
 
-      {isSearching && (
-        <div className="search-status" role="status">
-          Searching...
+      {/* Loading spinner */}
+      {isSearching && query.trim() && (
+        <div className="search-loading">
+          <FontAwesomeIcon icon={faSpinner} spin />
         </div>
       )}
     </div>
