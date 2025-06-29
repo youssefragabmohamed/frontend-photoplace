@@ -151,13 +151,15 @@ const SearchPage = () => {
   const renderResults = () => {
     if (type === 'photos') {
       return photos.length > 0 ? (
-        <Photobox
-          photos={photos}
-          onPhotoClick={(photo) => navigate(`/photos/${photo._id}`)}
-          loading={loading}
-          hasMore={hasMore}
-          onLoadMore={handleLoadMore}
-        />
+        <div className="search-results-container">
+          <Photobox
+            photos={photos}
+            onPhotoClick={(photo) => navigate(`/photos/${photo._id}`)}
+            loading={loading}
+            hasMore={hasMore}
+            onLoadMore={handleLoadMore}
+          />
+        </div>
       ) : !loading && query ? (
         <div className="no-results">
           <h3>No photos found</h3>
@@ -166,26 +168,28 @@ const SearchPage = () => {
       ) : null;
     } else {
       return users.length > 0 ? (
-        <div className="users-grid">
-          {users.map(user => (
-            <div key={user._id} className="user-card" onClick={() => navigate(`/profile/${user._id}`)}>
-              <img src={user.profilePicture || '/default-avatar.png'} alt={user.username} className="user-avatar" />
-              <div className="user-info">
-                <h3>{user.username}</h3>
-                {user.fullName && <p className="user-name">{user.fullName}</p>}
-                {user.bio && <p className="user-bio">{user.bio}</p>}
-                <div className="user-stats">
-                  <span>{user.followerCount} followers</span>
-                  <span>{user.followingCount} following</span>
+        <div className="search-results-container">
+          <div className="users-grid">
+            {users.map(user => (
+              <div key={user._id} className="user-card" onClick={() => navigate(`/profile/${user._id}`)}>
+                <img src={user.profilePicture || '/default-avatar.png'} alt={user.username} className="user-avatar" />
+                <div className="user-info">
+                  <h3>{user.username}</h3>
+                  {user.fullName && <p className="user-name">{user.fullName}</p>}
+                  {user.bio && <p className="user-bio">{user.bio}</p>}
+                  <div className="user-stats">
+                    <span>{user.followerCount} followers</span>
+                    <span>{user.followingCount} following</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-          {hasMore && (
-            <button className="load-more-btn" onClick={handleLoadMore} disabled={loading}>
-              Load more
-            </button>
-          )}
+            ))}
+            {hasMore && (
+              <button className="load-more-btn" onClick={handleLoadMore} disabled={loading}>
+                Load more
+              </button>
+            )}
+          </div>
         </div>
       ) : !loading && query ? (
         <div className="no-results">

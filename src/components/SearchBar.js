@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { debounce } from 'lodash';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faTimes, faImage, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faTimes, faImage, faUser, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 const SearchBar = ({ onSearch, initialQuery = '', initialType = 'photos' }) => {
   const [query, setQuery] = useState(initialQuery);
   const [searchType, setSearchType] = useState(initialType);
   const [isSearching, setIsSearching] = useState(false);
+  const [isTabSwitching, setIsTabSwitching] = useState(false);
   const isComponentMounted = useRef(true);
 
   // Update state when initial values change
@@ -33,6 +34,7 @@ const SearchBar = ({ onSearch, initialQuery = '', initialType = 'photos' }) => {
       if (isComponentMounted.current) {
         onSearch({ query: searchQuery, type });
         setIsSearching(false);
+        setIsTabSwitching(false);
       }
     }, 500),
     [onSearch]
@@ -62,27 +64,15 @@ const SearchBar = ({ onSearch, initialQuery = '', initialType = 'photos' }) => {
     setQuery(sanitizedValue);
   };
 
+  const handleTypeChange = (type) => {
+    if (type !== searchType) {
+      setIsTabSwitching(true);
+      setSearchType(type);
+    }
+  };
+
   return (
     <div className="search-container">
-      <div className="search-type-toggle">
-        <button
-          className={`toggle-btn ${searchType === 'photos' ? 'active' : ''}`}
-          onClick={() => setSearchType('photos')}
-          aria-label="Search photos"
-        >
-          <FontAwesomeIcon icon={faImage} />
-          Photos
-        </button>
-        <button
-          className={`toggle-btn ${searchType === 'users' ? 'active' : ''}`}
-          onClick={() => setSearchType('users')}
-          aria-label="Search users"
-        >
-          <FontAwesomeIcon icon={faUser} />
-          Users
-        </button>
-      </div>
-
       <div className="search-bar">
         <div className="search-input-wrapper">
           <FontAwesomeIcon icon={faSearch} className="search-icon" />
@@ -105,6 +95,34 @@ const SearchBar = ({ onSearch, initialQuery = '', initialType = 'photos' }) => {
             </button>
           )}
         </div>
+      </div>
+
+      {/* Instagram-style filter tabs */}
+      <div className="search-filter-tabs">
+        <button
+          className={`filter-tab ${searchType === 'photos' ? 'active' : ''}`}
+          onClick={() => handleTypeChange('photos')}
+          aria-label="Search photos"
+          disabled={isTabSwitching}
+        >
+          <FontAwesomeIcon icon={faImage} />
+          <span>Photos</span>
+          {isTabSwitching && searchType === 'photos' && (
+            <FontAwesomeIcon icon={faSpinner} className="tab-spinner" spin />
+          )}
+        </button>
+        <button
+          className={`filter-tab ${searchType === 'users' ? 'active' : ''}`}
+          onClick={() => handleTypeChange('users')}
+          aria-label="Search users"
+          disabled={isTabSwitching}
+        >
+          <FontAwesomeIcon icon={faUser} />
+          <span>Users</span>
+          {isTabSwitching && searchType === 'users' && (
+            <FontAwesomeIcon icon={faSpinner} className="tab-spinner" spin />
+          )}
+        </button>
       </div>
 
       {isSearching && (
