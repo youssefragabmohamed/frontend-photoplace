@@ -2832,3 +2832,116 @@ h3 { font-size: var(--text-lg); }
     transform: scale(0.95) !important;
   }
 }
+
+/* Photo hover effects and smooth transitions */
+.masonry-item {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.masonry-item:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.masonry-item:hover .photo-overlay {
+  opacity: 1 !important;
+}
+
+.masonry-item:hover .photo-container img {
+  transform: scale(1.02);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .masonry-item {
+    transition: transform 0.15s ease;
+  }
+  
+  .masonry-item:active {
+    transform: scale(0.98);
+  }
+  
+  /* Disable hover effects on mobile */
+  .masonry-item:hover {
+    transform: none;
+    box-shadow: var(--shadow-md);
+  }
+  
+  .masonry-item:hover .photo-overlay {
+    opacity: 0 !important;
+  }
+  
+  .masonry-item:hover .photo-container img {
+    transform: none;
+  }
+}
+
+/* Photo description styling */
+.photo-description {
+  transition: opacity 0.2s ease;
+}
+
+/* Smooth loading animations */
+.masonry-item {
+  animation: fadeInUp 0.3s ease forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Stagger animation for masonry items */
+.masonry-item:nth-child(1) { animation-delay: 0.05s; }
+.masonry-item:nth-child(2) { animation-delay: 0.1s; }
+.masonry-item:nth-child(3) { animation-delay: 0.15s; }
+.masonry-item:nth-child(4) { animation-delay: 0.2s; }
+.masonry-item:nth-child(5) { animation-delay: 0.25s; }
+.masonry-item:nth-child(6) { animation-delay: 0.3s; }
+.masonry-item:nth-child(7) { animation-delay: 0.35s; }
+.masonry-item:nth-child(8) { animation-delay: 0.4s; }
+
+/* Action button improvements */
+.action-button {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.action-button:hover {
+  transform: scale(1.1);
+}
+
+/* Remove default link styling */
+.masonry-item-link {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  outline: none;
+}
+
+.masonry-item-link:focus {
+  outline: none;
+}
+
+/* Photo container improvements */
+.photo-container {
+  position: relative;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+/* Loading state improvements */
+.loading-more {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

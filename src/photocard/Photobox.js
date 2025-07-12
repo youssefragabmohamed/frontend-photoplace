@@ -27,6 +27,7 @@ const PhotoBox = ({
   const [startY, setStartY] = useState(0);
   const [isPulling, setIsPulling] = useState(false);
   const [isPullingBottom, setIsPullingBottom] = useState(false);
+  const [showBottomLoader, setShowBottomLoader] = useState(false);
   const containerRef = useRef(null);
 
   // Updated breakpoints for better mobile experience
@@ -53,7 +54,8 @@ const PhotoBox = ({
   };
 
   // Generate placeholder cards to fill empty spaces - Pinterest style
-  const generatePlaceholders = (count = 20) => {
+  // Calculate based on number of columns to ensure 4 per column
+  const generatePlaceholders = (count = 16) => {
     const placeholders = [];
     
     for (let i = 0; i < count; i++) {
@@ -68,16 +70,16 @@ const PhotoBox = ({
   const isAtBottom = () => {
     if (!containerRef.current) return false;
     const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
-    return scrollTop + clientHeight >= scrollHeight - 10; // 10px threshold
+    return scrollTop + clientHeight >= scrollHeight - 50; // Increased threshold
   };
 
   // Check if scrolled to top
   const isAtTop = () => {
     if (!containerRef.current) return false;
-    return containerRef.current.scrollTop === 0;
+    return containerRef.current.scrollTop <= 10; // Small threshold for top
   };
 
-  // Pull to refresh handlers
+  // Pull to refresh handlers with lower sensitivity
   const handleTouchStart = (e) => {
     const touchY = e.touches[0].clientY;
     setStartY(touchY);
@@ -96,13 +98,13 @@ const PhotoBox = ({
     const distance = currentY - startY;
     
     if (isPulling && distance > 0 && isAtTop()) {
-      // Pull down from top
-      const pullAmount = Math.min(distance * 0.5, 120);
+      // Pull down from top with lower sensitivity (0.3 instead of 0.5)
+      const pullAmount = Math.min(distance * 0.3, 120);
       setPullDistance(pullAmount);
       e.preventDefault();
     } else if (isPullingBottom && distance < 0 && isAtBottom()) {
-      // Pull up from bottom
-      const pullAmount = Math.min(Math.abs(distance) * 0.5, 120);
+      // Pull up from bottom with lower sensitivity
+      const pullAmount = Math.min(Math.abs(distance) * 0.3, 120);
       setBottomPullDistance(pullAmount);
       e.preventDefault();
     }
@@ -114,7 +116,7 @@ const PhotoBox = ({
     if (isPulling) {
       setIsPulling(false);
       
-      if (pullDistance > 80) {
+      if (pullDistance > 100) { // Increased threshold for activation
         // Trigger refresh from top
         setIsRefreshing(true);
         setPullDistance(0);
@@ -134,7 +136,7 @@ const PhotoBox = ({
     if (isPullingBottom) {
       setIsPullingBottom(false);
       
-      if (bottomPullDistance > 80) {
+      if (bottomPullDistance > 100) { // Increased threshold for activation
         // Trigger refresh from bottom
         setIsRefreshing(true);
         setBottomPullDistance(0);
@@ -152,7 +154,7 @@ const PhotoBox = ({
     }
   };
 
-  // Mouse events for desktop
+  // Mouse events for desktop with lower sensitivity
   const handleMouseDown = (e) => {
     const mouseY = e.clientY;
     setStartY(mouseY);
@@ -170,15 +172,30 @@ const PhotoBox = ({
     const distance = e.clientY - startY;
     
     if (isPulling && distance > 0 && isAtTop()) {
-      const pullAmount = Math.min(distance * 0.5, 120);
+      const pullAmount = Math.min(distance * 0.3, 120); // Lower sensitivity
       setPullDistance(pullAmount);
     } else if (isPullingBottom && distance < 0 && isAtBottom()) {
-      const pullAmount = Math.min(Math.abs(distance) * 0.5, 120);
+      const pullAmount = Math.min(Math.abs(distance) * 0.3, 120); // Lower sensitivity
       setBottomPullDistance(pullAmount);
     }
   };
 
   const handleMouseUp = handleTouchEnd;
+
+  // Scroll handler for bottom loading indicator
+  const handleScroll = () => {
+    if (isAtBottom() && !loadingMore && !showBottomLoader) {
+      setShowBottomLoader(true);
+      // Hide after 2 seconds if no loading starts
+      setTimeout(() => {
+        if (!loadingMore) {
+          setShowBottomLoader(false);
+        }
+      }, 2000);
+    } else if (!isAtBottom()) {
+      setShowBottomLoader(false);
+    }
+  };
 
   // Add event listeners
   useEffect(() => {
@@ -192,6 +209,7 @@ const PhotoBox = ({
     container.addEventListener('mousemove', handleMouseMove);
     container.addEventListener('mouseup', handleMouseUp);
     container.addEventListener('mouseleave', handleMouseUp);
+    container.addEventListener('scroll', handleScroll);
 
     return () => {
       container.removeEventListener('touchstart', handleTouchStart);
@@ -201,8 +219,9 @@ const PhotoBox = ({
       container.removeEventListener('mousemove', handleMouseMove);
       container.removeEventListener('mouseup', handleMouseUp);
       container.removeEventListener('mouseleave', handleMouseUp);
+      container.removeEventListener('scroll', handleScroll);
     };
-  }, [isPulling, isPullingBottom, isRefreshing, pullDistance, bottomPullDistance, startY]);
+  }, [isPulling, isPullingBottom, isRefreshing, pullDistance, bottomPullDistance, startY, loadingMore]);
 
   // Show loading placeholders when loading and no photos
   if (loading && photos.length === 0) {
@@ -288,14 +307,27 @@ const PhotoBox = ({
     }, 1000);
   };
 
-  // Combine real photos with placeholder cards to fill remaining space
+  // Calculate placeholders needed to ensure 4 per column
+  const getColumnsCount = () => {
+    const width = window.innerWidth;
+    if (width >= 1200) return 4;
+    if (width >= 900) return 3;
+    if (width >= 600) return 2;
+    return 2;
+  };
+
+  // Generate fill placeholders to ensure 4 per column
   const generateFillPlaceholders = () => {
-    const placeholders = [];
-    const numPlaceholders = Math.max(0, 16 - photos.length); // Fill up to 16 total items
+    const columnsCount = getColumnsCount();
+    const targetItemsPerColumn = 4;
+    const totalTargetItems = columnsCount * targetItemsPerColumn;
+    const currentItems = photos.length;
+    const neededPlaceholders = Math.max(0, totalTargetItems - currentItems);
     
-    for (let i = 0; i < numPlaceholders; i++) {
+    const placeholders = [];
+    for (let i = 0; i < neededPlaceholders; i++) {
       placeholders.push(
-        <PlaceholderCard key={`fill-placeholder-${i}`} index={i + photos.length} />
+        <PlaceholderCard key={`fill-placeholder-${i}`} index={i + currentItems} />
       );
     }
     return placeholders;
@@ -312,112 +344,183 @@ const PhotoBox = ({
         <Link 
           to={`/photos/${photo._id}`} 
           className="masonry-item-link" 
-          style={{ display: "block", position: "relative" }}
+          style={{ 
+            display: "block", 
+            position: "relative",
+            textDecoration: "none",
+            WebkitTapHighlightColor: "transparent",
+            WebkitTouchCallout: "none",
+            WebkitUserSelect: "none",
+            userSelect: "none"
+          }}
         >
-          <img
-            src={getImageUrl(photo.url)}
-            alt={photo.title || "No Title"}
-            style={{
-              width: "100%",
-              borderRadius: "var(--radius-md)",
-              display: "block"
-            }}
-            loading="lazy"
-            onError={handleImageError}
-          />
-          <div className="photo-overlay">
-            <h3 className="photo-title">{photo.title}</h3>
-            <div className="photo-actions">
-              {showSaveButton && (
-                <button
-                  className={`action-button ${savedPhotos.includes(photo._id) ? 'active' : ''}`}
-                  onClick={(e) => handleSave(photo._id, e)}
-                >
-                  <FontAwesomeIcon 
-                    icon={savedPhotos.includes(photo._id) ? faBookmarkSolid : faBookmarkRegular} 
-                  />
-                </button>
-              )}
-              {photo.userId === localStorage.getItem('userId') && (
-                <button
-                  className="action-button delete"
-                  onClick={(e) => handleDelete(photo._id, e)}
-                >
-                  Delete
-                </button>
-              )}
+          <div className="photo-container" style={{
+            position: "relative",
+            borderRadius: "var(--radius-md)",
+            overflow: "hidden",
+            transition: "transform 0.2s ease, box-shadow 0.2s ease"
+          }}>
+            <img
+              src={getImageUrl(photo.url)}
+              alt={photo.title || "No Title"}
+              style={{
+                width: "100%",
+                borderRadius: "var(--radius-md)",
+                display: "block",
+                transition: "transform 0.2s ease"
+              }}
+              loading="lazy"
+              onError={handleImageError}
+            />
+            
+            {/* Hover overlay - only shows on hover */}
+            <div className="photo-overlay" style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: "linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.3) 100%)",
+              opacity: 0,
+              transition: "opacity 0.2s ease",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              padding: "16px"
+            }}>
+              <div className="photo-actions" style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "8px"
+              }}>
+                {showSaveButton && (
+                  <button
+                    className="action-button"
+                    style={{
+                      background: "rgba(255, 255, 255, 0.9)",
+                      border: "none",
+                      borderRadius: "50%",
+                      width: "36px",
+                      height: "36px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      color: savedPhotos.includes(photo._id) ? "var(--primary)" : "var(--text-secondary)"
+                    }}
+                    onClick={(e) => handleSave(photo._id, e)}
+                    onMouseEnter={(e) => {
+                      e.target.style.transform = "scale(1.1)";
+                      e.target.style.background = "rgba(255, 255, 255, 1)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.transform = "scale(1)";
+                      e.target.style.background = "rgba(255, 255, 255, 0.9)";
+                    }}
+                  >
+                    <FontAwesomeIcon 
+                      icon={savedPhotos.includes(photo._id) ? faBookmarkSolid : faBookmarkRegular} 
+                    />
+                  </button>
+                )}
+                {photo.userId === localStorage.getItem('userId') && (
+                  <button
+                    className="action-button delete"
+                    style={{
+                      background: "rgba(255, 255, 255, 0.9)",
+                      border: "none",
+                      borderRadius: "50%",
+                      width: "36px",
+                      height: "36px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      color: "#e74c3c",
+                      fontSize: "12px"
+                    }}
+                    onClick={(e) => handleDelete(photo._id, e)}
+                    onMouseEnter={(e) => {
+                      e.target.style.transform = "scale(1.1)";
+                      e.target.style.background = "rgba(255, 255, 255, 1)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.transform = "scale(1)";
+                      e.target.style.background = "rgba(255, 255, 255, 0.9)";
+                    }}
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+              
+              <h3 className="photo-title" style={{
+                color: "white",
+                fontSize: "16px",
+                fontWeight: "600",
+                margin: 0,
+                textShadow: "0 1px 3px rgba(0,0,0,0.5)",
+                lineHeight: "1.3"
+              }}>
+                {photo.title}
+              </h3>
             </div>
           </div>
+          
+          {/* Description under photo - shows when there's space */}
+          {(photo.description || photo.user?.username) && (
+            <div className="photo-description" style={{
+              padding: "12px 0 8px 0",
+              lineHeight: "1.4"
+            }}>
+              {photo.title && (
+                <h4 style={{
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  margin: "0 0 4px 0",
+                  color: "var(--text-primary)",
+                  lineHeight: "1.3"
+                }}>
+                  {photo.title}
+                </h4>
+              )}
+              {photo.description && (
+                <p style={{
+                  fontSize: "13px",
+                  color: "var(--text-secondary)",
+                  margin: "0 0 4px 0",
+                  lineHeight: "1.4",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis"
+                }}>
+                  {photo.description}
+                </p>
+              )}
+              {photo.user?.username && (
+                <p style={{
+                  fontSize: "12px",
+                  color: "var(--text-tertiary)",
+                  margin: 0,
+                  fontWeight: "500"
+                }}>
+                  by {photo.user.username}
+                </p>
+              )}
+            </div>
+          )}
         </Link>
       </div>
     )),
     ...generateFillPlaceholders()
   ];
 
-  const handleManualRefresh = async () => {
-    if (isRefreshing) return;
-    
-    setIsRefreshing(true);
-    
-    if (refreshPhotos) {
-      await refreshPhotos();
-    }
-    
-    // Simulate refresh delay
-    setTimeout(() => {
-      setIsRefreshing(false);
-    }, 1000);
-  };
-
   return (
     <div className="masonry-container" ref={containerRef}>
-      {/* Manual refresh button */}
-      <div 
-        className="manual-refresh-button"
-        style={{
-          position: 'absolute',
-          top: '20px',
-          right: '20px',
-          zIndex: 1001,
-          opacity: 0,
-          transition: 'opacity 0.3s ease, transform 0.2s ease',
-          cursor: 'pointer'
-        }}
-        onMouseEnter={(e) => {
-          e.target.style.opacity = '1';
-          e.target.style.transform = 'scale(1.1)';
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.opacity = '0';
-          e.target.style.transform = 'scale(1)';
-        }}
-        onClick={handleManualRefresh}
-      >
-        <div 
-          style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '50%',
-            background: 'var(--primary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            boxShadow: 'var(--shadow-lg)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)'
-          }}
-        >
-          <FontAwesomeIcon 
-            icon={faSyncAlt} 
-            style={{
-              animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
-              fontSize: '18px'
-            }}
-          />
-        </div>
-      </div>
-
       {/* Top pull to refresh indicator */}
       <div 
         className="pull-to-refresh-indicator top-indicator"
@@ -464,7 +567,7 @@ const PhotoBox = ({
             fontWeight: 500
           }}
         >
-          {isRefreshing ? 'Refreshing...' : pullDistance > 80 ? 'Release to refresh' : 'Pull to refresh'}
+          {isRefreshing ? 'Refreshing...' : pullDistance > 100 ? 'Release to refresh' : 'Pull to refresh'}
         </div>
       </div>
 
@@ -514,7 +617,7 @@ const PhotoBox = ({
             fontWeight: 500
           }}
         >
-          {isRefreshing ? 'Refreshing...' : bottomPullDistance > 80 ? 'Release to refresh' : 'Pull to refresh'}
+          {isRefreshing ? 'Refreshing...' : bottomPullDistance > 100 ? 'Release to refresh' : 'Pull to refresh'}
         </div>
       </div>
 
@@ -532,10 +635,34 @@ const PhotoBox = ({
         >
           {allItems}
         </Masonry>
-        {loadingMore && (
-          <div className="loading-more">
-            <div className="spinner"></div>
-            <p>Loading more photos...</p>
+        
+        {/* Bottom loading indicator - Instagram style */}
+        {(loadingMore || showBottomLoader) && (
+          <div className="loading-more" style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+            marginTop: '20px'
+          }}>
+            <div 
+              style={{
+                width: '24px',
+                height: '24px',
+                borderRadius: '50%',
+                border: '2px solid var(--primary)',
+                borderTop: '2px solid transparent',
+                animation: 'spin 1s linear infinite',
+                marginRight: '12px'
+              }}
+            />
+            <p style={{ 
+              color: 'var(--text-secondary)', 
+              fontSize: '14px',
+              margin: 0
+            }}>
+              {loadingMore ? 'Loading more photos...' : 'Pull to refresh'}
+            </p>
           </div>
         )}
       </div>
