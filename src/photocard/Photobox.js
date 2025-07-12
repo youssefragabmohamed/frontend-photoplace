@@ -28,6 +28,21 @@ const PhotoBox = ({
     600: 1
   };
 
+  // Helper function to get full image URL with fallback
+  const getImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    
+    // Ensure we have a valid API URL
+    const apiUrl = process.env.REACT_APP_API_URL || '';
+    if (!apiUrl) {
+      console.warn('REACT_APP_API_URL is not defined');
+      return url; // Return the original URL as fallback
+    }
+    
+    return `${apiUrl}${url}`;
+  };
+
   if (loading && photos.length === 0) {
     return (
       <div className="loading-container">
@@ -75,6 +90,20 @@ const PhotoBox = ({
     if (refreshPhotos) refreshPhotos();
   };
 
+  const handleImageError = (e) => {
+    e.target.onerror = null; // Prevent infinite loop
+    console.warn('Image failed to load:', e.target.src);
+    
+    // Try to reload the image once with a slight delay
+    const originalSrc = e.target.src;
+    setTimeout(() => {
+      if (e.target.src === originalSrc) {
+        // If the image still hasn't loaded, use a simple placeholder
+        e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjE1MCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5OTkiPkltYWdlPC90ZXh0Pjwvc3ZnPg==';
+      }
+    }, 1000);
+  };
+
   return (
     <div className="masonry-container">
       <Masonry
@@ -94,7 +123,7 @@ const PhotoBox = ({
               style={{ display: "block", position: "relative" }}
             >
               <img
-                src={photo.url.startsWith("http") ? photo.url : `${process.env.REACT_APP_API_URL}${photo.url}`}
+                src={getImageUrl(photo.url)}
                 alt={photo.title || "No Title"}
                 style={{
                   width: "100%",
@@ -102,10 +131,7 @@ const PhotoBox = ({
                   display: "block"
                 }}
                 loading="lazy"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2VlZWVlZSIvPjx0ZXh0IHg9IjQwMCIgeT0iMzAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5OTk5OTkiPkltYWdlIE5vdCBBdmFpbGFibGU8L3RleHQ+PC9zdmc+';
-                }}
+                onError={handleImageError}
               />
               <div className="photo-overlay">
                 <h3 className="photo-title">{photo.title}</h3>

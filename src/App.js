@@ -36,7 +36,17 @@ const App = () => {
           return;
         }
 
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/me`, {
+        // Ensure we have a valid API URL
+        const apiUrl = process.env.REACT_APP_API_URL;
+        if (!apiUrl) {
+          console.warn('REACT_APP_API_URL is not defined, clearing auth token');
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('userId');
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch(`${apiUrl}/api/users/me`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -45,12 +55,24 @@ const App = () => {
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
-        } else {
+          localStorage.setItem('userId', data.user._id); // Store user ID
+        } else if (response.status === 401) {
+          // Token is invalid or expired
+          console.warn('Authentication token is invalid or expired');
           localStorage.removeItem('authToken');
+          localStorage.removeItem('userId');
+          setUser(null);
+        } else {
+          // Other error, but don't clear token immediately
+          console.error('Auth check failed with status:', response.status);
         }
       } catch (error) {
         console.error('Auth check error:', error);
-        localStorage.removeItem('authToken');
+        // Only clear token on network errors, not on auth errors
+        if (error.name === 'TypeError' || error.message.includes('fetch')) {
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('userId');
+        }
       } finally {
         setLoading(false);
       }
@@ -61,6 +83,7 @@ const App = () => {
 
   const handleLogin = async (userData) => {
     localStorage.setItem('authToken', userData.token);
+    localStorage.setItem('userId', userData.user._id); // Store user ID
     setUser(userData.user);
     setNotification({
       message: 'Successfully logged in!',
@@ -73,6 +96,7 @@ const App = () => {
       throw new Error('No token received from server');
     }
     localStorage.setItem('authToken', userData.token);
+    localStorage.setItem('userId', userData.user._id); // Store user ID
     setUser(userData.user);
     setNotification({
       message: 'Account created successfully!',
@@ -83,7 +107,10 @@ const App = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('authToken');
+    localStorage.removeItem('userId'); // Clear any cached user ID
     setUser(null);
+    setPhotos([]); // Clear any cached photos
+    setSearchQuery(""); // Clear search query
     setNotification({
       message: 'Successfully logged out!',
       type: 'success'

@@ -37,7 +37,15 @@ const PhotoDetail = ({ user }) => {
   const getImageUrl = (url) => {
     if (!url) return LOADING_ANIMATION;
     if (url.startsWith('http')) return url;
-    return `${process.env.REACT_APP_API_URL}${url}`;
+    
+    // Ensure we have a valid API URL
+    const apiUrl = process.env.REACT_APP_API_URL || '';
+    if (!apiUrl) {
+      console.warn('REACT_APP_API_URL is not defined');
+      return url; // Return the original URL as fallback
+    }
+    
+    return `${apiUrl}${url}`;
   };
 
   useEffect(() => {
