@@ -163,46 +163,146 @@ h3 { font-size: var(--text-lg); }
 
 /* ===== PINTEREST-STYLE MASONRY GRID ===== */
 .masonry-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  grid-gap: var(--space-md);
-  padding: var(--space-md);
+  display: flex;
+  margin-left: -15px;
+  width: auto;
 }
 
-/* Mobile (up to 600px wide) */
-@media (max-width: 600px) {
-  .masonry-grid {
-    grid-template-columns: repeat(2, 1fr);  /* 2 columns on mobile */
-  }
-}
-
-/* Tablet (600px to 1024px wide) */
-@media (min-width: 601px) and (max-width: 1024px) {
-  .masonry-grid {
-    grid-template-columns: repeat(3, 1fr);  /* 3 columns on tablets */
-  }
-}
-
-/* Laptop (1024px to 1440px wide) */
-@media (min-width: 1025px) and (max-width: 1440px) {
-  .masonry-grid {
-    grid-template-columns: repeat(5, 1fr);  /* 5 columns on laptops */
-  }
-}
-
-/* Desktop (1440px and wider) */
-@media (min-width: 1441px) {
-  .masonry-grid {
-    grid-template-columns: repeat(6, 1fr);  /* 6 columns on desktops */
-  }
+.masonry-grid_column {
+  padding-left: 15px;
+  background-clip: padding-box;
 }
 
 .masonry-item {
-  grid-row-end: span var(--row-span, 20);
+  margin-bottom: 15px;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  position: relative;
   transition: var(--transition-normal);
+}
+
+.masonry-item img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Mobile (up to 600px wide) - 2 columns */
+@media (max-width: 600px) {
+  .masonry-grid {
+    margin-left: -10px;
+  }
+  
+  .masonry-grid_column {
+    padding-left: 10px;
+  }
+  
+  .masonry-item {
+    margin-bottom: 10px;
+  }
+}
+
+/* Tablet (600px to 1024px wide) - 3 columns */
+@media (min-width: 601px) and (max-width: 1024px) {
+  .masonry-grid {
+    margin-left: -12px;
+  }
+  
+  .masonry-grid_column {
+    padding-left: 12px;
+  }
+}
+
+/* Desktop (1024px and wider) - 4+ columns */
+@media (min-width: 1025px) {
+  .masonry-grid {
+    margin-left: -15px;
+  }
+  
+  .masonry-grid_column {
+    padding-left: 15px;
+  }
+}
+
+/* Placeholder card animations */
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.placeholder-card {
+  animation: fadeInUp 0.6s ease-out, breathe 3s ease-in-out infinite;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Subtle breathing animation for placeholders */
+@keyframes breathe {
+  0%, 100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Enhanced hover effects for placeholder cards */
+.placeholder-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: var(--shadow-lg);
+  animation-play-state: paused;
+}
+
+/* Mobile hover states */
+@media (hover: none) {
+  .placeholder-card:hover {
+    transform: none;
+    box-shadow: var(--shadow-md);
+  }
+}
+
+/* Placeholder card responsive adjustments */
+@media (max-width: 600px) {
+  .placeholder-card {
+    border-radius: var(--radius-md);
+    margin-bottom: 8px;
+  }
+  
+  .placeholder-card > div {
+    border-radius: var(--radius-sm);
+  }
+  
+  /* Ensure 2 columns work properly on mobile */
+  .masonry-grid_column {
+    width: 50% !important;
+  }
+  
+  /* Adjust placeholder heights for mobile */
+  .placeholder-card {
+    min-height: 150px;
+    max-height: 280px;
+  }
+}
+
+/* Ensure smooth animations */
+.placeholder-card,
+.masonry-item {
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .masonry-item-link {
@@ -1041,7 +1141,7 @@ h3 { font-size: var(--text-lg); }
   display: inline-block;
 }
 
-/* Masonry Grid Styles */
+/* Masonry Container Styles */
 .masonry-container {
   width: 100%;
   padding: 20px;
@@ -1049,27 +1149,39 @@ h3 { font-size: var(--text-lg); }
   height: calc(100vh - 200px);
   scrollbar-width: thin;
   scrollbar-color: var(--primary) var(--background);
+  position: relative; /* For overlay positioning */
 }
 
-.masonry-grid {
-  display: flex;
-  margin-left: -15px;
-  width: auto;
+.masonry-container::-webkit-scrollbar {
+  width: 8px;
 }
 
-.masonry-grid_column {
-  padding-left: 15px;
-  background-clip: padding-box;
+.masonry-container::-webkit-scrollbar-track {
+  background: var(--background);
 }
 
-.masonry-item {
-  margin-bottom: 15px;
+.masonry-container::-webkit-scrollbar-thumb {
+  background-color: var(--primary);
+  border-radius: 4px;
 }
 
-.masonry-item img {
-  width: 100%;
-  height: auto;
-  display: block;
+/* Empty gallery overlay */
+.empty-gallery-overlay {
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+}
+
+/* Mobile adjustments for masonry container */
+@media (max-width: 600px) {
+  .masonry-container {
+    padding: 10px;
+    height: calc(100vh - 180px);
+  }
+  
+  .empty-gallery-overlay {
+    margin: 0 10px;
+    padding: 15px;
+  }
 }
 
 /* Mobile-specific styles */
@@ -1207,13 +1319,21 @@ h3 { font-size: var(--text-lg); }
 
 /* PhotoBox mobile styles */
 @media (max-width: 600px) {
-  .masonry-grid {
-    display: flex;
-    flex-direction: column;
+  .masonry-item {
+    margin-bottom: 10px;
   }
   
-  .masonry-item {
-    margin-bottom: 15px;
+  .photo-overlay {
+    padding: 12px;
+  }
+  
+  .photo-title {
+    font-size: 14px;
+  }
+  
+  .action-button {
+    padding: 6px;
+    font-size: 12px;
   }
 }
 
@@ -2593,5 +2713,122 @@ h3 { font-size: var(--text-lg); }
   }
   to {
     opacity: 1;
+  }
+}
+
+/* Pull to Refresh Styles */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pull-to-refresh-indicator {
+  pointer-events: none;
+  user-select: none;
+}
+
+.pull-to-refresh-indicator.top-indicator {
+  top: 0;
+}
+
+.pull-to-refresh-indicator.bottom-indicator {
+  bottom: 0;
+  padding-bottom: 20px;
+}
+
+.refresh-icon {
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.refresh-text {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Smooth pull animation */
+.masonry-container {
+  overflow: hidden;
+}
+
+.masonry-container > div {
+  will-change: transform;
+}
+
+/* Enhanced pull feedback */
+@media (max-width: 600px) {
+  .pull-to-refresh-indicator.top-indicator {
+    top: 10px;
+  }
+  
+  .pull-to-refresh-indicator.bottom-indicator {
+    bottom: 10px;
+    padding-bottom: 15px;
+  }
+  
+  .refresh-icon {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .refresh-text {
+    font-size: 11px;
+  }
+}
+
+/* Pull resistance effect */
+.masonry-container {
+  overscroll-behavior: contain;
+}
+
+/* Dark mode support for pull to refresh */
+@media (prefers-color-scheme: dark) {
+  .refresh-icon {
+    background: var(--primary-dark);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .refresh-text {
+    color: var(--text-primary);
+  }
+}
+
+/* Manual refresh button styles */
+.manual-refresh-button {
+  pointer-events: auto;
+}
+
+.manual-refresh-button:hover {
+  transform: scale(1.1) !important;
+}
+
+/* Mobile support for manual refresh */
+@media (max-width: 600px) {
+  .manual-refresh-button {
+    top: 10px !important;
+    right: 10px !important;
+  }
+  
+  .manual-refresh-button > div {
+    width: 40px !important;
+    height: 40px !important;
+  }
+  
+  .manual-refresh-button svg {
+    font-size: 16px !important;
+  }
+}
+
+/* Touch-friendly refresh button */
+@media (hover: none) {
+  .manual-refresh-button {
+    opacity: 0.8 !important;
+  }
+  
+  .manual-refresh-button:active {
+    transform: scale(0.95) !important;
   }
 }
