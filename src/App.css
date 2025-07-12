@@ -2833,9 +2833,22 @@ h3 { font-size: var(--text-lg); }
   }
 }
 
+/* Masonry grid styling */
+.masonry-grid {
+  display: flex;
+  width: auto;
+  gap: 8px; /* Reduced gap between items - Instagram style */
+}
+
+.masonry-grid_column {
+  background-clip: padding-box;
+  padding: 0 4px; /* Reduced padding - Instagram style */
+}
+
 /* Photo hover effects and smooth transitions */
 .masonry-item {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  margin-bottom: 8px; /* Reduced margin bottom - Instagram style */
 }
 
 .masonry-item:hover {
@@ -2851,10 +2864,30 @@ h3 { font-size: var(--text-lg); }
   transform: scale(1.02);
 }
 
+/* Ensure overlay is hidden by default */
+.photo-overlay {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+.masonry-item:hover .photo-overlay {
+  opacity: 1 !important;
+  pointer-events: auto;
+}
+
 /* Mobile optimizations */
 @media (max-width: 768px) {
+  .masonry-grid {
+    gap: 4px; /* Even smaller gap on mobile */
+  }
+  
+  .masonry-grid_column {
+    padding: 0 2px; /* Smaller padding on mobile */
+  }
+  
   .masonry-item {
     transition: transform 0.15s ease;
+    margin-bottom: 4px; /* Smaller margin on mobile */
   }
   
   .masonry-item:active {
@@ -2869,6 +2902,7 @@ h3 { font-size: var(--text-lg); }
   
   .masonry-item:hover .photo-overlay {
     opacity: 0 !important;
+    pointer-events: none;
   }
   
   .masonry-item:hover .photo-container img {
@@ -2879,6 +2913,7 @@ h3 { font-size: var(--text-lg); }
 /* Photo description styling */
 .photo-description {
   transition: opacity 0.2s ease;
+  padding: 8px 0 4px 0; /* Reduced padding - Instagram style */
 }
 
 /* Smooth loading animations */
@@ -2931,7 +2966,7 @@ h3 { font-size: var(--text-lg); }
 /* Photo container improvements */
 .photo-container {
   position: relative;
-  border-radius: var(--radius-md);
+  border-radius: 8px; /* Smaller rounded corners - Instagram style */
   overflow: hidden;
   background: var(--bg-secondary);
 }
@@ -2944,4 +2979,10 @@ h3 { font-size: var(--text-lg); }
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+/* Ensure masonry container extends to bottom */
+.masonry-container {
+  min-height: 100vh;
+  padding-bottom: 100px; /* Extra padding to ensure content extends past screen */
 }

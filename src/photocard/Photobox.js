@@ -6,7 +6,6 @@ import "../App.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBookmark as faBookmarkSolid } from '@fortawesome/free-solid-svg-icons';
 import { faBookmark as faBookmarkRegular } from '@fortawesome/free-regular-svg-icons';
-import { faSyncAlt } from '@fortawesome/free-solid-svg-icons';
 
 const PhotoBox = ({ 
   photos = [], 
@@ -21,12 +20,6 @@ const PhotoBox = ({
   loadingMore
 }) => {
   const navigate = useNavigate();
-  const [pullDistance, setPullDistance] = useState(0);
-  const [bottomPullDistance, setBottomPullDistance] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [startY, setStartY] = useState(0);
-  const [isPulling, setIsPulling] = useState(false);
-  const [isPullingBottom, setIsPullingBottom] = useState(false);
   const [showBottomLoader, setShowBottomLoader] = useState(false);
   const containerRef = useRef(null);
 
@@ -73,115 +66,6 @@ const PhotoBox = ({
     return scrollTop + clientHeight >= scrollHeight - 50; // Increased threshold
   };
 
-  // Check if scrolled to top
-  const isAtTop = () => {
-    if (!containerRef.current) return false;
-    return containerRef.current.scrollTop <= 10; // Small threshold for top
-  };
-
-  // Pull to refresh handlers with lower sensitivity
-  const handleTouchStart = (e) => {
-    const touchY = e.touches[0].clientY;
-    setStartY(touchY);
-    
-    if (isAtTop()) {
-      setIsPulling(true);
-    } else if (isAtBottom()) {
-      setIsPullingBottom(true);
-    }
-  };
-
-  const handleTouchMove = (e) => {
-    if ((!isPulling && !isPullingBottom) || isRefreshing) return;
-    
-    const currentY = e.touches[0].clientY;
-    const distance = currentY - startY;
-    
-    if (isPulling && distance > 0 && isAtTop()) {
-      // Pull down from top with lower sensitivity (0.3 instead of 0.5)
-      const pullAmount = Math.min(distance * 0.3, 120);
-      setPullDistance(pullAmount);
-      e.preventDefault();
-    } else if (isPullingBottom && distance < 0 && isAtBottom()) {
-      // Pull up from bottom with lower sensitivity
-      const pullAmount = Math.min(Math.abs(distance) * 0.3, 120);
-      setBottomPullDistance(pullAmount);
-      e.preventDefault();
-    }
-  };
-
-  const handleTouchEnd = async () => {
-    if (!isPulling && !isPullingBottom) return;
-    
-    if (isPulling) {
-      setIsPulling(false);
-      
-      if (pullDistance > 100) { // Increased threshold for activation
-        // Trigger refresh from top
-        setIsRefreshing(true);
-        setPullDistance(0);
-        
-        if (refreshPhotos) {
-          await refreshPhotos();
-        }
-        
-        setTimeout(() => {
-          setIsRefreshing(false);
-        }, 1000);
-      } else {
-        setPullDistance(0);
-      }
-    }
-    
-    if (isPullingBottom) {
-      setIsPullingBottom(false);
-      
-      if (bottomPullDistance > 100) { // Increased threshold for activation
-        // Trigger refresh from bottom
-        setIsRefreshing(true);
-        setBottomPullDistance(0);
-        
-        if (refreshPhotos) {
-          await refreshPhotos();
-        }
-        
-        setTimeout(() => {
-          setIsRefreshing(false);
-        }, 1000);
-      } else {
-        setBottomPullDistance(0);
-      }
-    }
-  };
-
-  // Mouse events for desktop with lower sensitivity
-  const handleMouseDown = (e) => {
-    const mouseY = e.clientY;
-    setStartY(mouseY);
-    
-    if (isAtTop()) {
-      setIsPulling(true);
-    } else if (isAtBottom()) {
-      setIsPullingBottom(true);
-    }
-  };
-
-  const handleMouseMove = (e) => {
-    if ((!isPulling && !isPullingBottom) || isRefreshing) return;
-    
-    const distance = e.clientY - startY;
-    
-    if (isPulling && distance > 0 && isAtTop()) {
-      const pullAmount = Math.min(distance * 0.3, 120); // Lower sensitivity
-      setPullDistance(pullAmount);
-    } else if (isPullingBottom && distance < 0 && isAtBottom()) {
-      const pullAmount = Math.min(Math.abs(distance) * 0.3, 120); // Lower sensitivity
-      setBottomPullDistance(pullAmount);
-    }
-  };
-
-  const handleMouseUp = handleTouchEnd;
-
   // Scroll handler for bottom loading indicator
   const handleScroll = () => {
     if (isAtBottom() && !loadingMore && !showBottomLoader) {
@@ -202,26 +86,12 @@ const PhotoBox = ({
     const container = containerRef.current;
     if (!container) return;
 
-    container.addEventListener('touchstart', handleTouchStart, { passive: false });
-    container.addEventListener('touchmove', handleTouchMove, { passive: false });
-    container.addEventListener('touchend', handleTouchEnd);
-    container.addEventListener('mousedown', handleMouseDown);
-    container.addEventListener('mousemove', handleMouseMove);
-    container.addEventListener('mouseup', handleMouseUp);
-    container.addEventListener('mouseleave', handleMouseUp);
     container.addEventListener('scroll', handleScroll);
 
     return () => {
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchmove', handleTouchMove);
-      container.removeEventListener('touchend', handleTouchEnd);
-      container.removeEventListener('mousedown', handleMouseDown);
-      container.removeEventListener('mousemove', handleMouseMove);
-      container.removeEventListener('mouseup', handleMouseUp);
-      container.removeEventListener('mouseleave', handleMouseUp);
       container.removeEventListener('scroll', handleScroll);
     };
-  }, [isPulling, isPullingBottom, isRefreshing, pullDistance, bottomPullDistance, startY, loadingMore]);
+  }, [loadingMore]);
 
   // Show loading placeholders when loading and no photos
   if (loading && photos.length === 0) {
@@ -324,8 +194,12 @@ const PhotoBox = ({
     const currentItems = photos.length;
     const neededPlaceholders = Math.max(0, totalTargetItems - currentItems);
     
+    // Add extra placeholders to ensure content extends to bottom of screen
+    const extraPlaceholders = Math.max(0, 8 - neededPlaceholders);
+    const totalPlaceholders = neededPlaceholders + extraPlaceholders;
+    
     const placeholders = [];
-    for (let i = 0; i < neededPlaceholders; i++) {
+    for (let i = 0; i < totalPlaceholders; i++) {
       placeholders.push(
         <PlaceholderCard key={`fill-placeholder-${i}`} index={i + currentItems} />
       );
@@ -356,7 +230,7 @@ const PhotoBox = ({
         >
           <div className="photo-container" style={{
             position: "relative",
-            borderRadius: "var(--radius-md)",
+            borderRadius: "8px", // Smaller rounded corners - Instagram style
             overflow: "hidden",
             transition: "transform 0.2s ease, box-shadow 0.2s ease"
           }}>
@@ -365,7 +239,7 @@ const PhotoBox = ({
               alt={photo.title || "No Title"}
               style={{
                 width: "100%",
-                borderRadius: "var(--radius-md)",
+                borderRadius: "8px", // Smaller rounded corners - Instagram style
                 display: "block",
                 transition: "transform 0.2s ease"
               }}
@@ -373,19 +247,20 @@ const PhotoBox = ({
               onError={handleImageError}
             />
             
-            {/* Hover overlay - only shows on hover */}
+            {/* Hover overlay - only shows save button on hover */}
             <div className="photo-overlay" style={{
               position: "absolute",
               top: 0,
               left: 0,
               right: 0,
               bottom: 0,
-              background: "linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.3) 100%)",
+              background: "linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, transparent 40%, transparent 60%, rgba(0,0,0,0.2) 100%)",
               opacity: 0,
               transition: "opacity 0.2s ease",
               display: "flex",
               flexDirection: "column",
-              justifyContent: "space-between",
+              justifyContent: "flex-start",
+              alignItems: "flex-end",
               padding: "16px"
             }}>
               <div className="photo-actions" style={{
@@ -455,17 +330,6 @@ const PhotoBox = ({
                   </button>
                 )}
               </div>
-              
-              <h3 className="photo-title" style={{
-                color: "white",
-                fontSize: "16px",
-                fontWeight: "600",
-                margin: 0,
-                textShadow: "0 1px 3px rgba(0,0,0,0.5)",
-                lineHeight: "1.3"
-              }}>
-                {photo.title}
-              </h3>
             </div>
           </div>
           
@@ -521,151 +385,43 @@ const PhotoBox = ({
 
   return (
     <div className="masonry-container" ref={containerRef}>
-      {/* Top pull to refresh indicator */}
-      <div 
-        className="pull-to-refresh-indicator top-indicator"
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 1000,
-          opacity: pullDistance > 0 ? 1 : 0,
-          transition: 'opacity 0.2s ease'
-        }}
+      <Masonry
+        breakpointCols={breakpointColumnsObj}
+        className="masonry-grid"
+        columnClassName="masonry-grid_column"
       >
-        <div 
-          className="refresh-icon"
-          style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            background: 'var(--primary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            boxShadow: 'var(--shadow-md)',
-            transform: `rotate(${pullDistance * 2}deg) scale(${1 + pullDistance / 200})`,
-            transition: 'transform 0.1s ease'
-          }}
-        >
-          <FontAwesomeIcon 
-            icon={faSyncAlt} 
+        {allItems}
+      </Masonry>
+      
+      {/* Bottom loading indicator - Instagram style */}
+      {(loadingMore || showBottomLoader) && (
+        <div className="loading-more" style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px',
+          marginTop: '20px'
+        }}>
+          <div 
             style={{
-              animation: isRefreshing ? 'spin 1s linear infinite' : 'none'
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              border: '2px solid var(--primary)',
+              borderTop: '2px solid transparent',
+              animation: 'spin 1s linear infinite',
+              marginRight: '12px'
             }}
           />
-        </div>
-        <div 
-          className="refresh-text"
-          style={{
-            marginTop: '8px',
-            fontSize: '12px',
-            color: 'var(--text-secondary)',
-            textAlign: 'center',
-            fontWeight: 500
-          }}
-        >
-          {isRefreshing ? 'Refreshing...' : pullDistance > 100 ? 'Release to refresh' : 'Pull to refresh'}
-        </div>
-      </div>
-
-      {/* Bottom pull to refresh indicator */}
-      <div 
-        className="pull-to-refresh-indicator bottom-indicator"
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 1000,
-          opacity: bottomPullDistance > 0 ? 1 : 0,
-          transition: 'opacity 0.2s ease'
-        }}
-      >
-        <div 
-          className="refresh-icon"
-          style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            background: 'var(--primary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            boxShadow: 'var(--shadow-md)',
-            transform: `rotate(${-bottomPullDistance * 2}deg) scale(${1 + bottomPullDistance / 200})`,
-            transition: 'transform 0.1s ease'
-          }}
-        >
-          <FontAwesomeIcon 
-            icon={faSyncAlt} 
-            style={{
-              animation: isRefreshing ? 'spin 1s linear infinite' : 'none'
-            }}
-          />
-        </div>
-        <div 
-          className="refresh-text"
-          style={{
-            marginTop: '8px',
-            fontSize: '12px',
-            color: 'var(--text-secondary)',
-            textAlign: 'center',
-            fontWeight: 500
-          }}
-        >
-          {isRefreshing ? 'Refreshing...' : bottomPullDistance > 100 ? 'Release to refresh' : 'Pull to refresh'}
-        </div>
-      </div>
-
-      {/* Content with pull offset */}
-      <div 
-        style={{
-          transform: `translateY(${pullDistance - bottomPullDistance}px)`,
-          transition: isRefreshing ? 'transform 0.3s ease' : 'none'
-        }}
-      >
-        <Masonry
-          breakpointCols={breakpointColumnsObj}
-          className="masonry-grid"
-          columnClassName="masonry-grid_column"
-        >
-          {allItems}
-        </Masonry>
-        
-        {/* Bottom loading indicator - Instagram style */}
-        {(loadingMore || showBottomLoader) && (
-          <div className="loading-more" style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px',
-            marginTop: '20px'
+          <p style={{ 
+            color: 'var(--text-secondary)', 
+            fontSize: '14px',
+            margin: 0
           }}>
-            <div 
-              style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '50%',
-                border: '2px solid var(--primary)',
-                borderTop: '2px solid transparent',
-                animation: 'spin 1s linear infinite',
-                marginRight: '12px'
-              }}
-            />
-            <p style={{ 
-              color: 'var(--text-secondary)', 
-              fontSize: '14px',
-              margin: 0
-            }}>
-              {loadingMore ? 'Loading more photos...' : 'Pull to refresh'}
-            </p>
-          </div>
-        )}
-      </div>
+            {loadingMore ? 'Loading more photos...' : 'Loading...'}
+          </p>
+        </div>
+      )}
     </div>
   );
 };
