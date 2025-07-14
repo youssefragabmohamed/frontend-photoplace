@@ -171,12 +171,6 @@ const GalleryTabs = ({ user }) => {
       <PhotoBox
         photos={photos}
         loading={loading}
-        onDeletePhoto={handleDeletePhoto}
-        onSavePhoto={handleSavePhoto}
-        showSaveButton={true}
-        savedPhotos={savedPhotos.map(photo => photo._id)}
-        selectedTab={activeTab}
-        refreshPhotos={() => fetchPhotos(1, true)}
         lastPhotoRef={lastPhotoRef}
         loadingMore={loadingMore}
       />

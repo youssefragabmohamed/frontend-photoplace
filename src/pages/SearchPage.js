@@ -163,10 +163,8 @@ const SearchPage = () => {
         <div className="search-results-container">
           <Photobox
             photos={photos}
-            onPhotoClick={(photo) => navigate(`/photos/${photo._id}`)}
             loading={loading}
-            hasMore={hasMore}
-            onLoadMore={handleLoadMore}
+            loadingMore={false}
           />
         </div>
       ) : !loading && query ? (

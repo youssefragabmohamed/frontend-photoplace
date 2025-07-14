@@ -463,12 +463,6 @@ const ProfilePage = ({ user: currentUser }) => {
           <Photobox 
             photos={activeTab === 'photos' ? photos : savedPhotos}
             loading={loading}
-            onPhotoClick={handlePhotoClick}
-            onSavePhoto={handleSavePhoto}
-            showSaveButton={true}
-            savedPhotos={savedPhotos.map(photo => photo._id)}
-            selectedTab={activeTab}
-            refreshPhotos={() => fetchUserData(1, true)}
             lastPhotoRef={lastPhotoRef}
             loadingMore={loadingMore}
           />
