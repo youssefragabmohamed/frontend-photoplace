@@ -3272,8 +3272,7 @@ h3 { font-size: var(--text-lg); }
   }
   
   .photos-grid {
-    width: 100%;
-    max-width: 100%;
+    width: 100vw;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 3px;
