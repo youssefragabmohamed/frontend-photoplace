@@ -28,16 +28,11 @@ const Header = ({ user, onLogout }) => {
           fontWeight: 600,
           fontSize: "var(--text-xl)"
         }}>
-          PhotoMarket
+          PhotoPlace
         </Link>
 
         {user ? (
-          <div className="flex" style={{ gap: "var(--space-md)", alignItems: "center" }}>
-            <div className="user-info flex" style={{ alignItems: "center", gap: "var(--space-sm)" }}>
-              <FontAwesomeIcon icon={faUserCircle} style={{ fontSize: "1.5rem" }} />
-              <span style={{ fontWeight: 500 }}>{user.username}</span>
-            </div>
-          </div>
+          <div />
         ) : (
           <div className="flex" style={{ gap: "var(--space-sm)" }}>
             <Link 
