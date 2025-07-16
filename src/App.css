@@ -3255,3 +3255,98 @@ h3 { font-size: var(--text-lg); }
     padding: 3px;
   }
 }
+
+/* --- Instagram Mobile UI Enhancements --- */
+@media (max-width: 600px) {
+  .instagram-gallery-container {
+    height: calc(100vh - 120px);
+    padding: 0;
+    margin: 0;
+    background: #fafafa;
+    overflow-x: hidden;
+  }
+  .photos-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100vw;
+    min-height: 100vh;
+    background: #fafafa;
+  }
+  .photo-item {
+    border-radius: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    background: #fafafa;
+    position: relative;
+    aspect-ratio: 1/1;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    overflow: hidden;
+  }
+  .photo-item img {
+    border-radius: 0 !important;
+    width: 100vw;
+    max-width: 100vw;
+    min-width: 0;
+    min-height: 0;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+    display: block;
+    transition: opacity 0.2s, transform 0.2s;
+    user-select: none;
+    pointer-events: auto;
+  }
+  .photo-item:active img {
+    opacity: 0.85;
+    transform: scale(0.97);
+  }
+  .photos-grid::-webkit-scrollbar,
+  .instagram-gallery-container::-webkit-scrollbar {
+    display: none;
+  }
+  .loading-container,
+  .no-photos {
+    min-height: 60vh;
+    padding: 0;
+    margin: 0;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: #fafafa;
+  }
+  .no-photos h3 {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+  .no-photos p {
+    font-size: 14px;
+    color: #8e8e8e;
+  }
+}
+
+/* Hide scrollbars for all platforms */
+.photos-grid,
+.instagram-gallery-container {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.photos-grid::-webkit-scrollbar,
+.instagram-gallery-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Sticky header/nav for mobile (if present) */
+@media (max-width: 600px) {
+  .gallery-container > .tabs-container,
+  .gallery-container > .tab-header-container,
+  .main-content > header,
+  .main-content > .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+}
