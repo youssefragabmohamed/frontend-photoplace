@@ -25,7 +25,7 @@ const PhotoBox = ({
     return `${apiUrl}${url}`;
   };
 
-  // Intersection observer for infinite scroll
+  // Intersection observer for infinite scroll (only at the bottom)
   const { ref: loadMoreRef, inView } = useInView({
     threshold: 0.1,
     triggerOnce: false,
@@ -34,7 +34,6 @@ const PhotoBox = ({
   // Trigger load more when last item comes into view
   React.useEffect(() => {
     if (inView && !loadingMore && lastPhotoRef) {
-      // This will trigger the parent component to load more photos
       if (lastPhotoRef.current) {
         lastPhotoRef.current();
       }
@@ -114,80 +113,73 @@ const PhotoBox = ({
   return (
     <div className="instagram-gallery-container" ref={containerRef}>
       <div className="photos-grid">
-        {validPhotos.map((photo, index) => {
-          const { ref: intersectionRef, inView: isInView } = useInView({
-            threshold: 0.1,
-            triggerOnce: true,
-          });
-
-          return (
-            <motion.div
-              key={photo._id}
-              ref={index === validPhotos.length - 1 ? lastPhotoRef : intersectionRef}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-              transition={{ 
-                duration: 0.3, 
-                delay: index * 0.05,
-                ease: "easeOut"
+        {validPhotos.map((photo, index) => (
+          <motion.div
+            key={photo._id}
+            ref={index === validPhotos.length - 1 ? lastPhotoRef : null}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ 
+              duration: 0.3, 
+              delay: index * 0.05,
+              ease: "easeOut"
+            }}
+            whileHover={{ 
+              scale: 1.02,
+              transition: { duration: 0.2 }
+            }}
+            whileTap={{ scale: 0.98 }}
+            className="photo-item"
+          >
+            <Link 
+              to={`/photos/${photo._id}`} 
+              style={{ 
+                display: "block", 
+                width: "100%", 
+                height: "100%",
+                textDecoration: "none"
               }}
-              whileHover={{ 
-                scale: 1.02,
-                transition: { duration: 0.2 }
-              }}
-              whileTap={{ scale: 0.98 }}
-              className="photo-item"
+              tabIndex={0}
             >
-              <Link 
-                to={`/photos/${photo._id}`} 
-                style={{ 
-                  display: "block", 
-                  width: "100%", 
+              <motion.img
+                src={getImageUrl(photo.url)}
+                alt={photo.title || "Photo"}
+                onLoad={() => handleImageLoad(photo._id)}
+                onError={() => handleImageError(photo._id)}
+                style={{
+                  width: "100%",
                   height: "100%",
-                  textDecoration: "none"
+                  objectFit: "cover",
+                  borderRadius: "4px",
+                  display: "block",
+                  transition: "transform 0.2s ease"
                 }}
-                tabIndex={0}
-              >
-                <motion.img
-                  src={getImageUrl(photo.url)}
-                  alt={photo.title || "Photo"}
-                  onLoad={() => handleImageLoad(photo._id)}
-                  onError={() => handleImageError(photo._id)}
+                loading="lazy"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: imageLoadStates[photo._id] === 'loaded' ? 1 : 0 }}
+                transition={{ duration: 0.3 }}
+              />
+              {imageLoadStates[photo._id] !== 'loaded' && (
+                <motion.div
+                  className="image-placeholder"
                   style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
                     width: "100%",
                     height: "100%",
-                    objectFit: "cover",
-                    borderRadius: "4px",
-                    display: "block",
-                    transition: "transform 0.2s ease"
+                    background: "linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f0f0 75%), linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)",
+                    backgroundSize: "20px 20px",
+                    backgroundPosition: "0 0, 0 10px, 10px -10px, -10px 0px",
+                    borderRadius: "4px"
                   }}
-                  loading="lazy"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: imageLoadStates[photo._id] === 'loaded' ? 1 : 0 }}
-                  transition={{ duration: 0.3 }}
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
                 />
-                {imageLoadStates[photo._id] !== 'loaded' && (
-                  <motion.div
-                    className="image-placeholder"
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: "100%",
-                      background: "linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f0f0 75%), linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)",
-                      backgroundSize: "20px 20px",
-                      backgroundPosition: "0 0, 0 10px, 10px -10px, -10px 0px",
-                      borderRadius: "4px"
-                    }}
-                    animate={{ opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                  />
-                )}
-              </Link>
-            </motion.div>
-          );
-        })}
+              )}
+            </Link>
+          </motion.div>
+        ))}
       </div>
 
       {/* Load more trigger */}
