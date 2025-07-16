@@ -37,13 +37,6 @@ const Header = ({ user, onLogout }) => {
               <FontAwesomeIcon icon={faUserCircle} style={{ fontSize: "1.5rem" }} />
               <span style={{ fontWeight: 500 }}>{user.username}</span>
             </div>
-            <button 
-              onClick={onLogout}
-              className="btn btn-outline"
-              style={{ padding: "var(--space-xs) var(--space-sm)" }}
-            >
-              <FontAwesomeIcon icon={faSignOutAlt} />
-            </button>
           </div>
         ) : (
           <div className="flex" style={{ gap: "var(--space-sm)" }}>

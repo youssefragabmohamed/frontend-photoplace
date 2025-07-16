@@ -16,6 +16,7 @@ import PrivateRoute from "./photocard/PrivateRoute";
 import GalleryTabs from "./components/GalleryTabs";
 import './App.css';
 import NotificationBell from './components/NotificationBell';
+import SettingsPage from './components/SettingsPage';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -199,6 +200,14 @@ const App = () => {
               </PrivateRoute>
             } 
           />
+          <Route 
+            path="/settings" 
+            element={
+              <PrivateRoute user={user}>
+                <SettingsPage onLogout={handleLogout} />
+              </PrivateRoute>
+            } 
+          />
           <Route path="*" element={<Navigate to={user ? "/" : "/login"} replace />} />
         </Routes>
       </main>
@@ -235,7 +244,7 @@ const App = () => {
           </div>
           <div 
             className="nav-item settings"
-            onClick={() => setNotification({ message: "Settings coming soon!", type: "info" })}
+            onClick={() => handleNavClick('/settings')}
           >
             <FontAwesomeIcon icon={faCog} />
             <span>Settings</span>

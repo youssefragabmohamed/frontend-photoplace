@@ -63,6 +63,7 @@ body {
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
   padding-bottom: 80px;
+  overflow-x: hidden !important;
 }
 
 /* ===== LAYOUT UTILITIES ===== */
@@ -3348,5 +3349,37 @@ h3 { font-size: var(--text-lg); }
     z-index: 100;
     background: #fff;
     box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+}
+
+/* --- Prevent horizontal scroll and column squeeze --- */
+.App,
+.main-content,
+.instagram-gallery-container,
+.photos-grid {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  min-width: 0 !important;
+  overflow-x: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+  .App,
+  .main-content,
+  .instagram-gallery-container,
+  .photos-grid {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    min-width: 0 !important;
+    overflow-x: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box;
+  }
+  body {
+    overflow-x: hidden !important;
   }
 }
