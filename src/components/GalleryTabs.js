@@ -53,8 +53,12 @@ const GalleryTabs = ({ user }) => {
 
       const token = localStorage.getItem('authToken');
       if (!token) {
-        throw new Error('Not authenticated');
+        console.error('No auth token found');
+        setError('Please log in again');
+        return;
       }
+
+      console.log('Fetching photos from:', `${process.env.REACT_APP_API_URL}${endpoint}`);
 
       const response = await fetch(`${process.env.REACT_APP_API_URL}${endpoint}`, {
         headers: {
@@ -62,12 +66,22 @@ const GalleryTabs = ({ user }) => {
         },
       });
 
+      console.log('Photo fetch response status:', response.status);
+
       if (!response.ok) {
+        if (response.status === 401) {
+          console.error('Auth token expired or invalid');
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('userId');
+          setError('Session expired. Please log in again.');
+          return;
+        }
         const data = await response.json();
         throw new Error(data.message || 'Failed to fetch photos');
       }
 
       const data = await response.json();
+      console.log('Photos received:', data.photos?.length || 0, 'photos');
       
       if (activeTab === 'saved') {
         setSavedPhotos(data.photos);
