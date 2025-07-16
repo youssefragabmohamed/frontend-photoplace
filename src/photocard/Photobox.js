@@ -14,15 +14,20 @@ const PhotoBox = ({
   const [imageLoadStates, setImageLoadStates] = useState({});
 
   // Helper function to get full image URL with fallback
-  const getImageUrl = (url) => {
-    if (!url) return '';
+  const getImageUrl = (url, photo) => {
+    if (!url) {
+      console.warn('Photo missing URL:', photo);
+      return '';
+    }
     if (url.startsWith('http')) return url;
     const apiUrl = process.env.REACT_APP_API_URL || '';
     if (!apiUrl) {
-      console.warn('REACT_APP_API_URL is not defined');
+      console.warn('REACT_APP_API_URL is not defined. Photo:', photo);
       return url;
     }
-    return `${apiUrl}${url}`;
+    // Ensure leading slash
+    const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+    return `${apiUrl}${cleanUrl}`;
   };
 
   // Intersection observer for infinite scroll (only at the bottom)
@@ -142,10 +147,14 @@ const PhotoBox = ({
               tabIndex={0}
             >
               <motion.img
-                src={getImageUrl(photo.url)}
+                src={getImageUrl(photo.url, photo)}
                 alt={photo.title || "Photo"}
                 onLoad={() => handleImageLoad(photo._id)}
-                onError={() => handleImageError(photo._id)}
+                onError={e => {
+                  handleImageError(photo._id);
+                  e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDMwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNlZWUiLz48dGV4dCB4PSIxNTAiIHk9IjE1MCIgZm9udC1zaXplPSIxNCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzY2NiI+SW1hZ2UgTm90IEF2YWlsYWJsZTwvdGV4dD48L3N2Zz4=';
+                  console.warn('Image failed to load:', getImageUrl(photo.url, photo), photo);
+                }}
                 style={{
                   width: "100%",
                   height: "100%",
