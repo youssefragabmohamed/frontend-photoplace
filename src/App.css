@@ -3260,61 +3260,48 @@ h3 { font-size: var(--text-lg); }
 /* --- Instagram Mobile UI Enhancements --- */
 @media (max-width: 600px) {
   .instagram-gallery-container {
-    width: 100vw;
-    height: calc(100vh - 120px);
-    padding: 0;
-    margin: 0;
-    background: #fafafa;
-    overflow-x: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-  }
-  
-  .photos-grid {
-    width: 100vw;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 3px;
-    padding: 0;
-    margin: 0;
-    background: #fafafa;
-  }
-  
-  .photo-item {
     width: 100%;
-    aspect-ratio: 1/1;
-    border-radius: 0;
     margin: 0;
-    box-shadow: none;
+    padding: 0;
     background: #fafafa;
-    position: relative;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-    overflow: hidden;
+    box-sizing: border-box;
+    overflow-x: hidden;
   }
-  
+  .photos-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background: #fafafa;
+  }
+  .photo-item {
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    background: #fafafa;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
   .photo-item img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 0;
     display: block;
-    transition: opacity 0.2s, transform 0.2s;
-    user-select: none;
-    pointer-events: auto;
+    border-radius: 0;
   }
-  
   .photo-item:active img {
     opacity: 0.85;
     transform: scale(0.97);
   }
-  
   .photos-grid::-webkit-scrollbar,
   .instagram-gallery-container::-webkit-scrollbar {
     display: none;
   }
-  
   .loading-container,
   .no-photos {
     min-height: 60vh;
@@ -3325,12 +3312,10 @@ h3 { font-size: var(--text-lg); }
     text-align: center;
     background: #fafafa;
   }
-  
   .no-photos h3 {
     font-size: 18px;
     margin-bottom: 8px;
   }
-  
   .no-photos p {
     font-size: 14px;
     color: #8e8e8e;
