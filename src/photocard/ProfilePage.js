@@ -448,6 +448,18 @@ const ProfilePage = ({ user: currentUser }) => {
     setEditing(false);
   };
 
+  if (errorProfile || errorPhotos || errorSaved) {
+    return (
+      <div className="profile-container error-state" style={{ padding: 40, textAlign: 'center' }}>
+        <div className="error-message" style={{ color: 'red', fontSize: 18, marginBottom: 16 }}>
+          Sorry, something went wrong loading this profile.<br />
+          {errorProfile?.message || errorPhotos?.message || errorSaved?.message || 'Unknown error.'}
+        </div>
+        <button className="btn btn-primary" onClick={() => window.location.reload()}>Reload</button>
+      </div>
+    );
+  }
+
   if (loadingProfile || loadingPhotos || loadingSaved) {
     return (
       <div className="profile-page" style={{ maxWidth: 600, margin: '40px auto', padding: 24 }}>
@@ -470,22 +482,13 @@ const ProfilePage = ({ user: currentUser }) => {
     );
   }
 
-  if (errorProfile || errorPhotos || errorSaved) {
-    return (
-      <div className="profile-container error-state">
-        <div className="error-message">
-          {errorProfile || errorPhotos || errorSaved}
-        </div>
-      </div>
-    );
-  }
-
   if (!profileUser) {
     return (
-      <div className="profile-container error-state">
-        <div className="error-message">
-          User not found
+      <div className="profile-container error-state" style={{ padding: 40, textAlign: 'center' }}>
+        <div className="error-message" style={{ color: 'red', fontSize: 18, marginBottom: 16 }}>
+          User not found or failed to load.
         </div>
+        <button className="btn btn-primary" onClick={() => window.location.reload()}>Reload</button>
       </div>
     );
   }

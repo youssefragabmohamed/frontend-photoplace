@@ -3419,3 +3419,18 @@ html, body, #root, .App, .main-content, .instagram-gallery-container {
     border-radius: 0;
   }
 }
+
+/* Hide photo-actions-hover on mobile, show on desktop hover */
+.photo-actions-hover {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .photo-item:hover .photo-actions-hover {
+    display: block;
+  }
+}
+@media (max-width: 768px) {
+  .photo-actions-hover {
+    display: none !important;
+  }
+}

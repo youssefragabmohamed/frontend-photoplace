@@ -155,6 +155,9 @@ const PhotoBox = ({
     }
   };
 
+  // Add a utility function to detect mobile
+  const isMobile = () => window.innerWidth <= 768;
+
   // Show loading spinner when loading and no photos
   if (loading && photos.length === 0) {
     return (
@@ -219,30 +222,18 @@ const PhotoBox = ({
             ref={index === validPhotos.length - 1 ? lastPhotoRef : null}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ 
-              duration: 0.3, 
-              delay: index * 0.05,
-              ease: "easeOut"
-            }}
-            whileHover={{ 
-              scale: 1.02,
-              transition: { duration: 0.2 }
-            }}
+            transition={{ duration: 0.3, delay: index * 0.05, ease: "easeOut" }}
+            whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
             whileTap={{ scale: 0.98 }}
             className="photo-item"
             style={{ position: 'relative' }}
           >
-            <Link 
-              to={`/photos/${photo._id}`} 
-              style={{ 
-                display: "block", 
-                width: "100%", 
-                height: "100%",
-                textDecoration: "none"
-              }}
+            <Link
+              to={`/photos/${photo._id}`}
+              style={{ display: "block", width: "100%", height: "100%", textDecoration: "none" }}
               tabIndex={0}
             >
-              <motion.img
+              <img
                 src={getImageUrl(photo.url, photo)}
                 alt={photo.title || "Photo"}
                 onLoad={() => handleImageLoad(photo._id)}
@@ -251,107 +242,27 @@ const PhotoBox = ({
                   e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDMwMCAzMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNlZWUiLz48dGV4dCB4PSIxNTAiIHk9IjE1MCIgZm9udC1zaXplPSIxNCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzY2NiI+SW1hZ2UgTm90IEF2YWlsYWJsZTwvdGV4dD48L3N2Zz4=';
                   console.warn('Image failed to load:', getImageUrl(photo.url, photo), photo);
                 }}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  borderRadius: "4px",
-                  display: "block",
-                  transition: "transform 0.2s ease"
-                }}
+                style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "4px", display: "block", transition: "transform 0.2s ease" }}
                 loading="lazy"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: imageLoadStates[photo._id] === 'loaded' ? 1 : 0 }}
-                transition={{ duration: 0.3 }}
               />
             </Link>
-            {/* Like button overlay */}
-            <button
-              className="like-btn"
-              style={{
-                position: 'absolute',
-                top: 8,
-                right: 8,
-                background: 'rgba(255,255,255,0.85)',
-                border: 'none',
-                borderRadius: '50%',
-                width: 36,
-                height: 36,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                cursor: 'pointer',
-                zIndex: 2,
-                opacity: likes[photo._id]?.loading ? 0.6 : 1
-              }}
-              onClick={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (!likes[photo._id]?.loading) handleLike(photo._id);
-              }}
-              disabled={likes[photo._id]?.loading}
-            >
-              <FontAwesomeIcon
-                icon={likes[photo._id]?.liked ? faHeartSolid : faHeartRegular}
-                style={{ color: likes[photo._id]?.liked ? '#e74c3c' : '#888', fontSize: 20 }}
-              />
-            </button>
-            {/* Like count */}
-            <div style={{
-              position: 'absolute',
-              top: 48,
-              right: 12,
-              color: '#e74c3c',
-              fontWeight: 600,
-              fontSize: 14,
-              textShadow: '0 1px 2px #fff',
-              zIndex: 2
-            }}>
-              {likes[photo._id]?.count ?? 0}
-            </div>
-            {/* Save/Unsave (bookmark) button overlay */}
-            <button
-              className="save-btn"
-              style={{
-                position: 'absolute',
-                top: 8,
-                left: 8,
-                background: 'rgba(255,255,255,0.85)',
-                border: 'none',
-                borderRadius: '50%',
-                width: 36,
-                height: 36,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                cursor: 'pointer',
-                zIndex: 2
-              }}
-              onClick={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleSave(photo._id);
-              }}
-            >
-              <FontAwesomeIcon
-                icon={saved[photo._id] ? faBookmarkSolid : faBookmarkRegular}
-                style={{ color: saved[photo._id] ? '#0095f6' : '#888', fontSize: 20 }}
-              />
-            </button>
-            {/* Save count */}
-            <div style={{
-              position: 'absolute',
-              top: 48,
-              left: 12,
-              color: '#0095f6',
-              fontWeight: 600,
-              fontSize: 14,
-              textShadow: '0 1px 2px #fff',
-              zIndex: 2
-            }}>
-              {saved[photo._id] ? 'Saved' : 'Save'}
+            {/* Like/Save buttons only on desktop hover */}
+            <div className="photo-actions-hover">
+              <button
+                className="like-btn"
+                style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(255,255,255,0.85)', border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', cursor: 'pointer', zIndex: 2, opacity: likes[photo._id]?.loading ? 0.6 : 1 }}
+                onClick={e => { e.preventDefault(); e.stopPropagation(); if (!likes[photo._id]?.loading) handleLike(photo._id); }}
+                disabled={likes[photo._id]?.loading}
+              >
+                <FontAwesomeIcon icon={likes[photo._id]?.liked ? faHeartSolid : faHeartRegular} style={{ color: likes[photo._id]?.liked ? '#e74c3c' : '#888', fontSize: 20 }} />
+              </button>
+              <button
+                className="save-btn"
+                style={{ position: 'absolute', top: 8, left: 8, background: 'rgba(255,255,255,0.85)', border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', cursor: 'pointer', zIndex: 2 }}
+                onClick={e => { e.preventDefault(); e.stopPropagation(); handleSave(photo._id); }}
+              >
+                <FontAwesomeIcon icon={saved[photo._id] ? faBookmarkSolid : faBookmarkRegular} style={{ color: saved[photo._id] ? '#0095f6' : '#888', fontSize: 20 }} />
+              </button>
             </div>
           </motion.div>
         ))}
