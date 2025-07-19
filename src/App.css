@@ -3378,3 +3378,44 @@ h3 { font-size: var(--text-lg); }
     overflow-x: hidden !important;
   }
 }
+
+html, body, #root, .App, .main-content, .instagram-gallery-container {
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  width: 100vw !important;
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+  background: #fafafa !important;
+}
+
+@media (max-width: 600px) {
+  .photos-grid {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+    background: #fafafa;
+    box-sizing: border-box;
+  }
+  .photo-item {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: #fafafa;
+    overflow: hidden;
+  }
+  .photo-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 0;
+  }
+}
