@@ -21,6 +21,63 @@ const LOADING_ANIMATION = `data:image/svg+xml;base64,${btoa(`
     </g>
 </svg>`)}`;
 
+function Comments({ photoId }) {
+  const [comments, setComments] = useState([]);
+  const [text, setText] = useState('');
+  const [loading, setLoading] = useState(false);
+  const token = localStorage.getItem('authToken');
+
+  useEffect(() => {
+    fetch(`${process.env.REACT_APP_API_URL}/api/photos/${photoId}/comments`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(setComments);
+  }, [photoId, token]);
+
+  const addComment = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    const res = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/${photoId}/comments`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    const newComment = await res.json();
+    setComments([...comments, newComment]);
+    setText('');
+    setLoading(false);
+  };
+
+  const deleteComment = async (commentId) => {
+    await fetch(`${process.env.REACT_APP_API_URL}/api/photos/comments/${commentId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    setComments(comments.filter(c => c._id !== commentId));
+  };
+
+  return (
+    <div className="comments-section">
+      <form onSubmit={addComment} style={{ display: 'flex', gap: 8 }}>
+        <input value={text} onChange={e => setText(e.target.value)} placeholder="Add a comment..." required maxLength={500} />
+        <button type="submit" disabled={loading || !text.trim()}>Post</button>
+      </form>
+      <ul>
+        {comments.map(c => (
+          <li key={c._id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <img src={c.userId.profilePic || '/default-avatar.png'} alt="" style={{ width: 24, height: 24, borderRadius: '50%' }} />
+            <b>{c.userId.username}</b>: {c.text}
+            {c.userId._id === localStorage.getItem('userId') && (
+              <button onClick={() => deleteComment(c._id)} style={{ marginLeft: 8, color: 'red' }}>Delete</button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 const PhotoDetail = ({ user }) => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -320,6 +377,7 @@ const PhotoDetail = ({ user }) => {
           )}
         </div>
       </div>
+      <Comments photoId={photo._id} />
     </motion.div>
   );
 };

@@ -1,7 +1,12 @@
-import React, { useRef, useCallback, useState } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useInView } from "react-intersection-observer";
 import { motion, AnimatePresence } from "framer-motion";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faHeart as faHeartSolid } from '@fortawesome/free-solid-svg-icons';
+import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
+import { faBookmark as faBookmarkSolid } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark as faBookmarkRegular } from '@fortawesome/free-regular-svg-icons';
 import "../App.css";
 
 const PhotoBox = ({ 
@@ -12,6 +17,42 @@ const PhotoBox = ({
 }) => {
   const containerRef = useRef(null);
   const [imageLoadStates, setImageLoadStates] = useState({});
+  // Like state: { [photoId]: { liked: bool, count: number, loading: bool } }
+  const [likes, setLikes] = useState({});
+  const [saved, setSaved] = useState({});
+
+  // On mount or photos change, initialize like state from backend data
+  useEffect(() => {
+    const initialLikes = {};
+    photos.forEach(photo => {
+      if (photo && photo._id) {
+        initialLikes[photo._id] = {
+          liked: photo.likes && Array.isArray(photo.likes)
+            ? photo.likes.includes(localStorage.getItem('userId'))
+            : false,
+          count: photo.likeCount || (photo.likes ? photo.likes.length : 0),
+          loading: false
+        };
+      }
+    });
+    setLikes(initialLikes);
+  }, [photos]);
+
+  // Fetch saved photos on mount
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    fetch(`${process.env.REACT_APP_API_URL}/api/photos/saved`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        const savedMap = {};
+        (data.photos || []).forEach(photo => {
+          if (photo && photo._id) savedMap[photo._id] = true;
+        });
+        setSaved(savedMap);
+      });
+  }, []);
 
   // Helper function to get full image URL with fallback
   const getImageUrl = (url, photo) => {
@@ -59,6 +100,60 @@ const PhotoBox = ({
       [photoId]: 'error'
     }));
   }, []);
+
+  const handleLike = async (photoId) => {
+    setLikes(prev => ({
+      ...prev,
+      [photoId]: { ...prev[photoId], loading: true }
+    }));
+    const token = localStorage.getItem('authToken');
+    const isLiked = likes[photoId]?.liked;
+    try {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/${photoId}/like`, {
+        method: isLiked ? 'DELETE' : 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setLikes(prev => ({
+          ...prev,
+          [photoId]: {
+            liked: data.liked,
+            count: data.likeCount,
+            loading: false
+          }
+        }));
+      } else {
+        setLikes(prev => ({
+          ...prev,
+          [photoId]: { ...prev[photoId], loading: false }
+        }));
+        // Optionally show error toast
+      }
+    } catch (err) {
+      setLikes(prev => ({
+        ...prev,
+        [photoId]: { ...prev[photoId], loading: false }
+      }));
+      // Optionally show error toast
+    }
+  };
+
+  const handleSave = async (photoId) => {
+    const token = localStorage.getItem('authToken');
+    const isSaved = saved[photoId];
+    setSaved(prev => ({ ...prev, [photoId]: !isSaved })); // instant feedback
+    const res = await fetch(`${process.env.REACT_APP_API_URL}/api/photos/${photoId}/save`, {
+      method: isSaved ? 'DELETE' : 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) {
+      setSaved(prev => ({ ...prev, [photoId]: isSaved })); // revert on error
+    }
+  };
 
   // Show loading spinner when loading and no photos
   if (loading && photos.length === 0) {
@@ -135,6 +230,7 @@ const PhotoBox = ({
             }}
             whileTap={{ scale: 0.98 }}
             className="photo-item"
+            style={{ position: 'relative' }}
           >
             <Link 
               to={`/photos/${photo._id}`} 
@@ -168,25 +264,95 @@ const PhotoBox = ({
                 animate={{ opacity: imageLoadStates[photo._id] === 'loaded' ? 1 : 0 }}
                 transition={{ duration: 0.3 }}
               />
-              {imageLoadStates[photo._id] !== 'loaded' && (
-                <motion.div
-                  className="image-placeholder"
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                    background: "linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f0f0 75%), linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)",
-                    backgroundSize: "20px 20px",
-                    backgroundPosition: "0 0, 0 10px, 10px -10px, -10px 0px",
-                    borderRadius: "4px"
-                  }}
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                />
-              )}
             </Link>
+            {/* Like button overlay */}
+            <button
+              className="like-btn"
+              style={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                background: 'rgba(255,255,255,0.85)',
+                border: 'none',
+                borderRadius: '50%',
+                width: 36,
+                height: 36,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                cursor: 'pointer',
+                zIndex: 2,
+                opacity: likes[photo._id]?.loading ? 0.6 : 1
+              }}
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!likes[photo._id]?.loading) handleLike(photo._id);
+              }}
+              disabled={likes[photo._id]?.loading}
+            >
+              <FontAwesomeIcon
+                icon={likes[photo._id]?.liked ? faHeartSolid : faHeartRegular}
+                style={{ color: likes[photo._id]?.liked ? '#e74c3c' : '#888', fontSize: 20 }}
+              />
+            </button>
+            {/* Like count */}
+            <div style={{
+              position: 'absolute',
+              top: 48,
+              right: 12,
+              color: '#e74c3c',
+              fontWeight: 600,
+              fontSize: 14,
+              textShadow: '0 1px 2px #fff',
+              zIndex: 2
+            }}>
+              {likes[photo._id]?.count ?? 0}
+            </div>
+            {/* Save/Unsave (bookmark) button overlay */}
+            <button
+              className="save-btn"
+              style={{
+                position: 'absolute',
+                top: 8,
+                left: 8,
+                background: 'rgba(255,255,255,0.85)',
+                border: 'none',
+                borderRadius: '50%',
+                width: 36,
+                height: 36,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                cursor: 'pointer',
+                zIndex: 2
+              }}
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleSave(photo._id);
+              }}
+            >
+              <FontAwesomeIcon
+                icon={saved[photo._id] ? faBookmarkSolid : faBookmarkRegular}
+                style={{ color: saved[photo._id] ? '#0095f6' : '#888', fontSize: 20 }}
+              />
+            </button>
+            {/* Save count */}
+            <div style={{
+              position: 'absolute',
+              top: 48,
+              left: 12,
+              color: '#0095f6',
+              fontWeight: 600,
+              fontSize: 14,
+              textShadow: '0 1px 2px #fff',
+              zIndex: 2
+            }}>
+              {saved[photo._id] ? 'Saved' : 'Save'}
+            </div>
           </motion.div>
         ))}
       </div>
