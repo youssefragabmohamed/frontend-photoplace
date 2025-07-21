@@ -88,9 +88,18 @@ const ProfilePage = ({ user: currentUser }) => {
   const imgRef = useRef(null);
   const fileInputRef = useRef(null);
   const observer = useRef(null);
+  const [hasMore, setHasMore] = useState(true); // Fix crash: define hasMore state
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState(null);
+  const [photos, setPhotos] = useState([]);
+  const [activeTab, setActiveTab] = useState('posts');
+  const [profileUser, setProfileUser] = useState(null);
+  const [savedPhotos, setSavedPhotos] = useState([]);
 
   // Profile user
-  const { data: profileUser, isLoading: loadingProfile, error: errorProfile } = useQuery({
+  const { data: profileUserData, isLoading: loadingProfile, error: errorProfile } = useQuery({
     queryKey: ['profileUser', userId],
     queryFn: () => fetchProfileUser(userId, token),
     enabled: !!userId && !!token
@@ -102,7 +111,6 @@ const ProfilePage = ({ user: currentUser }) => {
     queryFn: () => fetchPhotos(userId, token),
     enabled: !!userId && !!token
   });
-  const photos = photosData?.photos || [];
 
   // Saved photos
   const { data: savedData, isLoading: loadingSaved, error: errorSaved } = useQuery({
@@ -110,7 +118,6 @@ const ProfilePage = ({ user: currentUser }) => {
     queryFn: () => fetchSavedPhotos(token),
     enabled: !!userId && !!token
   });
-  const savedPhotos = savedData?.photos || [];
 
   // Animation variants
   const fadeIn = {
@@ -468,6 +475,12 @@ const ProfilePage = ({ user: currentUser }) => {
     setEditing(false);
   };
 
+  // Helper function for robust image fallback
+  const handleImageError = (e) => {
+    e.target.onerror = null;
+    e.target.src = '/default-avatar.png';
+  };
+
   if (errorProfile || errorPhotos || errorSaved) {
     return (
       <div className="profile-container error-state" style={{ padding: 40, textAlign: 'center' }}>
@@ -575,7 +588,7 @@ const ProfilePage = ({ user: currentUser }) => {
                 filter: isHovering ? 'brightness(0.7)' : 'none'
               }}
               onLoad={() => setImageLoading(false)}
-              onError={e => { e.target.onerror = null; e.target.src = '/default-avatar.png'; }}
+              onError={handleImageError}
             />
             
             {isOwnProfile && isHovering && !uploadLoading && (
