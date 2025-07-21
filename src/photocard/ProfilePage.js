@@ -69,6 +69,26 @@ const ProfilePage = ({ user: currentUser }) => {
   const token = localStorage.getItem('authToken');
   const queryClient = useQueryClient();
 
+  // Add all missing state/refs
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [cropImage, setCropImage] = useState(null);
+  const [showCrop, setShowCrop] = useState(false);
+  const [crop, setCrop] = useState({ x: 0, y: 0, width: 100, height: 100 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+  const imgRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const observer = useRef(null);
+
   // Profile user
   const { data: profileUser, isLoading: loadingProfile, error: errorProfile } = useQuery({
     queryKey: ['profileUser', userId],
@@ -555,10 +575,7 @@ const ProfilePage = ({ user: currentUser }) => {
                 filter: isHovering ? 'brightness(0.7)' : 'none'
               }}
               onLoad={() => setImageLoading(false)}
-              onError={(e) => {
-                setImageLoading(false);
-                e.target.src = LOADING_ANIMATION;
-              }}
+              onError={e => { e.target.onerror = null; e.target.src = '/default-avatar.png'; }}
             />
             
             {isOwnProfile && isHovering && !uploadLoading && (
